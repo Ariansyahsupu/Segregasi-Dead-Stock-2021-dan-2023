@@ -1,0 +1,2469 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no">
+    <title>Inspeksi Dead Stock 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Apple & Vercel Inspired Design System */
+        body {
+            background-color: #FAFAFA; /* Vercel base background */
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            color: #111827;
+        }
+        .form-section {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #E5E7EB;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            margin-top: 0.35rem;
+            font-size: 0.875rem; 
+            transition: all 0.2s ease;
+            color: #111827;
+            background-color: #ffffff;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.01);
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #000000;
+            box-shadow: 0 0 0 1px #000000;
+        }
+        .input-field[readonly], select[readonly] {
+            background-color: #F9FAFB;
+            border-color: #F3F4F6;
+            color: #6B7280;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        /* Custom Toast Notification */
+        #toastNotification {
+            transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        /* Smooth blurred backdrops Apple Style */
+        .glass-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        .glass-modal {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        /* Scrollbar minimalist */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #D1D5DB;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="pb-20">
+
+    <!-- Custom Toast Container -->
+    <div id="toastNotification" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[200] opacity-0 pointer-events-none flex items-center gap-3 bg-zinc-900 text-white px-4 py-3 rounded-lg shadow-xl border border-zinc-800 max-w-sm w-11/12">
+        <div class="w-5 h-5 rounded-full flex items-center justify-center bg-zinc-800 shrink-0">
+            <i id="toastIcon" class="fas fa-info-circle text-white text-xs"></i>
+        </div>
+        <span id="toastMessage" class="text-sm font-medium leading-snug"></span>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="fixed inset-0 bg-[#FAFAFA] z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 w-full max-w-sm border border-zinc-200">
+            <div class="text-center mb-8">
+                <div class="w-14 h-14 bg-zinc-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                    <i class="fas fa-fingerprint text-2xl text-zinc-900"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-zinc-900 tracking-tight">Portal Inspeksi</h2>
+                <p class="text-sm text-zinc-500 mt-1">Reduce Inventory 2026</p>
+            </div>
+            <div class="mb-6 space-y-4">
+                <select id="loginPicName" class="input-field w-full text-center py-2.5 font-medium uppercase text-sm">
+                    <option value="" disabled selected>-- PILIH NAMA PIC --</option>
+                    <option value="ASMAN">ASMAN</option>
+                    <option value="FATHIKIN">FATHIKIN</option>
+                    <option value="SLAMET RIYADI">SLAMET RIYADI</option>
+                    <option value="FATURRAHMAN">FATURRAHMAN</option>
+                    <option value="ARDI">ARDI</option>
+                    <option value="MAULANA ITSNAL">MAULANA ITSNAL</option>
+                    <option value="ARI FAUNDA">ARI FAUNDA</option>
+                    <option value="RIFKI">RIFKI</option>
+                    <option value="EDWARD">EDWARD</option>
+                    <option value="SYAHRIL">SYAHRIL</option>
+                    <option value="PUTU">PUTU</option>
+                </select>
+                <div>
+                    <input type="password" id="loginPassword" class="input-field w-full text-center text-lg tracking-[0.2em] py-2.5 uppercase" placeholder="••••••••" oninput="this.value = this.value.toUpperCase()">
+                    <p id="loginError" class="text-red-500 text-xs text-center mt-2 hidden font-medium"><i class="fas fa-exclamation-circle mr-1"></i><span id="loginErrorMsg">Kredensial tidak valid</span></p>
+                </div>
+            </div>
+            <button type="button" id="btnLogin" class="w-full bg-black hover:bg-zinc-800 active:bg-zinc-900 active:scale-[0.98] text-white font-medium text-sm py-3 rounded-lg transition-all shadow-sm">Otorisasi Masuk</button>
+        </div>
+    </div>
+
+    <!-- Menu Utama Grid Screen -->
+    <div id="menuScreen" class="fixed inset-0 bg-[#FAFAFA] z-[90] hidden flex flex-col items-center justify-center p-4 overflow-y-auto">
+        <div class="w-full max-w-sm md:max-w-2xl bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-8 border border-zinc-200">
+            <div class="text-center mb-8">
+                <div class="w-14 h-14 bg-zinc-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-th-large text-2xl text-zinc-900"></i>
+                </div>
+                <h2 class="text-xl font-bold text-zinc-900 tracking-tight">Menu Utama</h2>
+                <p class="text-sm text-zinc-500 mt-1">Pilih aktivitas yang ingin dilakukan</p>
+                <div class="mt-4 inline-flex items-center gap-2 bg-zinc-50 border border-zinc-200 py-1.5 px-4 rounded-full">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <p class="text-xs font-medium text-zinc-700">PIC: <span id="menuPicName" class="font-bold text-zinc-900">-</span></p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <button type="button" id="btnGoToForm" class="w-full flex items-center gap-4 p-5 rounded-xl border border-zinc-200 bg-white hover:border-black hover:shadow-md transition-all text-left group">
+                    <div class="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-900 shrink-0 group-hover:scale-105 transition-transform">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-zinc-900 text-sm">Form Penginputan</h4>
+                        <p class="text-xs text-zinc-500 mt-0.5">Input data cycle count & fisik</p>
+                    </div>
+                </button>
+
+                <button type="button" id="btnGoToExport" class="w-full flex items-center gap-4 p-5 rounded-xl border border-zinc-200 bg-white hover:border-black hover:shadow-md transition-all text-left group">
+                    <div class="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-900 shrink-0 group-hover:scale-105 transition-transform">
+                        <i class="fas fa-file-excel"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-zinc-900 text-sm">Export Data Inspeksi</h4>
+                        <p class="text-xs text-zinc-500 mt-0.5">Unduh hasil inspeksi sistem</p>
+                    </div>
+                </button>
+            </div>
+
+            <button type="button" id="btnMenuLogout" class="w-full bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-700 font-medium py-2.5 rounded-lg text-sm transition-colors"><i class="fas fa-sign-out-alt mr-1.5"></i> Keluar</button>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header id="appHeader" class="glass-header text-zinc-900 p-4 sticky top-0 z-50 hidden">
+        <div class="flex items-center justify-between max-w-lg mx-auto">
+            <h1 class="text-base font-semibold tracking-tight flex items-center gap-2">
+                <i class="fas fa-cube text-zinc-900"></i> Inspeksi 
+                <span id="roleBadge" class="text-[10px] bg-zinc-100 text-zinc-800 border border-zinc-200 font-semibold px-2 py-0.5 rounded uppercase tracking-wider"></span>
+            </h1>
+            <div class="flex gap-3 items-center">
+                <span class="text-[10px] text-zinc-500 font-medium">v2026</span>
+                <button type="button" id="btnLogout" class="text-xs bg-white border border-zinc-200 hover:bg-zinc-50 active:bg-zinc-100 text-zinc-800 px-3 py-1.5 rounded-md font-medium transition-all shadow-sm"><i class="fas fa-arrow-left mr-1"></i> Back</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Form -->
+    <main id="mainApp" class="p-4 max-w-lg mx-auto hidden mt-2">
+        <form id="inspeksiForm" class="space-y-4">
+            <div class="form-section">
+                <!-- 1. Tgl Cycle Count -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-zinc-700">Tgl Cycle Count</label>
+                    <input type="text" id="tglCycleCount" name="tglCycleCount" class="input-field" readonly required>
+                </div>
+                
+                <!-- 2. Pelaksana -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-zinc-700">Pelaksana</label>
+                    <input type="text" id="pelaksana" name="pelaksana" class="input-field" readonly>
+                </div>
+
+                <!-- 3. Material -->
+                <div id="logistikSearchGroup" class="mb-4">
+                    <label class="block text-sm font-medium text-zinc-700">Material / Part Number</label>
+                    <div class="relative mt-1">
+                        <div class="flex gap-2 items-start">
+                            <input type="text" id="materialNumber" name="materialNumber" class="input-field !mt-0 flex-1 font-medium" placeholder="Cth: 123456 atau MPN" required>
+                            <button type="button" id="btnCekStatus" class="bg-black text-white px-4 py-2.5 rounded-lg font-medium hover:bg-zinc-800 active:scale-[0.98] transition-all shadow-sm flex items-center justify-center min-w-[3rem]">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <div id="suggestionBox" class="hidden absolute z-[60] w-full bg-white border border-zinc-200 shadow-lg rounded-lg mt-1 max-h-48 overflow-y-auto"></div>
+                    </div>
+                    <!-- Keterangan Detail Ketersediaan Stock Real-Time di Bawah Input Material -->
+                    <p id="stockInfoFeedback" class="text-xs text-zinc-700 mt-2 font-medium hidden flex items-start gap-1.5">
+                        <i class="fas fa-layer-group text-zinc-400 mt-0.5"></i>
+                        <span>
+                            Ketersediaan Stock: <span id="stockInfoValue" class="font-bold text-zinc-900">0</span> <span id="stockInfoUom" class="text-zinc-500"></span>
+                            <span id="stockInfoBins" class="block text-[10px] text-zinc-500 mt-0.5"></span>
+                        </span>
+                    </p>
+                </div>
+
+                <div id="statusIndicator" class="hidden mb-4 p-3 rounded-lg text-sm font-medium text-center border shadow-sm"></div>
+
+                <!-- Informasi MB52 Info Card -->
+                <div id="mb52InfoCard" class="hidden mb-4 p-4 rounded-xl text-sm border bg-zinc-50 border-zinc-200 text-zinc-800">
+                    <div class="font-semibold border-b border-zinc-200 pb-2 mb-2 flex items-center gap-2 text-xs uppercase tracking-wider text-zinc-500">
+                        <i class="fas fa-warehouse text-zinc-400"></i> MB52 DC Palaran
+                    </div>
+                    <!-- Header Tabel -->
+                    <div class="grid grid-cols-3 gap-2 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">
+                        <div>Sloc</div>
+                        <div>Storage Bin</div>
+                        <div>Unrestricted</div>
+                    </div>
+                    <!-- Wadah Baris Dinamis -->
+                    <div id="mb52RowsContainer" class="space-y-1 max-h-40 overflow-y-auto mb-2">
+                        <!-- Baris data sloc & bin akan dimasukkan lewat JS -->
+                    </div>
+                    <!-- Baris Total Kumulatif -->
+                    <div class="border-t border-zinc-200 pt-2 flex justify-between text-xs font-semibold text-zinc-900">
+                        <span>TOTAL</span>
+                        <span id="mb52TotalUnrestricted">-</span>
+                    </div>
+                </div>
+
+                <!-- Banner Informasi Mode Revisi -->
+                <div id="revisiModeBadge" class="hidden mb-4 p-3 rounded-lg text-xs font-medium text-center border shadow-sm bg-zinc-100 text-zinc-800 border-zinc-200 flex justify-between items-center">
+                    <span><i class="fas fa-edit mr-1.5 text-zinc-500"></i> Mode Revisi Aktif</span>
+                    <button type="button" id="btnResetMode" class="text-[10px] bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-700 px-2.5 py-1 rounded-md font-medium transition-colors">Batal</button>
+                </div>
+
+                <!-- 4. Material Description -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-zinc-700">Material Description</label>
+                    <textarea id="description" name="description" class="input-field" rows="2" readonly></textarea>
+                </div>
+
+                <!-- 5. Mfr Part Number -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-zinc-700">Mfr Part Number</label>
+                    <input type="text" id="partNumber" name="partNumber" class="input-field">
+                </div>
+
+                <!-- 6. BOX PACKING -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-zinc-700">BOX PACKING</label>
+                    <input type="text" id="boxPacking" name="boxPacking" class="input-field">
+                </div>
+
+                <!-- 7. Base Unit of Measure -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-zinc-700">Base Unit of Measure</label>
+                    <input type="text" id="uom" name="uom" class="input-field">
+                </div>
+
+                <!-- 8. Storage Bin -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-zinc-700">Storage Bin</label>
+                    <input type="text" id="storageBin" name="storageBin" class="input-field">
+                </div>
+
+                <!-- 9. Remarks -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-zinc-700">Remarks</label>
+                    <textarea id="remarks" name="remarks" class="input-field" rows="2"></textarea>
+                </div>
+
+                <!-- 10. Total Value -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-zinc-700">Total Value</label>
+                    <input type="number" id="totalValue" name="totalValue" class="input-field">
+                </div>
+
+                <!-- 11. Over stock -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-zinc-700">Over stock</label>
+                    <input type="text" id="overStock" name="overStock" class="input-field">
+                </div>
+
+                <!-- 17. Dokumentasi -->
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-zinc-700 mb-2">Dokumentasi <span class="text-red-500">*</span></label>
+                    <div class="flex items-center justify-center w-full">
+                        <label for="fotoFisik" class="flex flex-col items-center justify-center w-full h-40 border-2 border-zinc-200 border-dashed rounded-xl cursor-pointer bg-zinc-50 hover:bg-zinc-100 transition-colors relative overflow-hidden group" id="dropArea">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6" id="uploadPlaceholder">
+                                <div class="w-10 h-10 bg-white border border-zinc-200 rounded-full shadow-sm flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                                    <i class="fas fa-camera text-zinc-500"></i>
+                                </div>
+                                <p class="text-xs text-zinc-500 font-medium">Ambil Foto Fisik</p>
+                            </div>
+                            <img id="imagePreview" class="hidden absolute inset-0 w-full h-full object-cover" alt="Preview Foto">
+                            <input id="fotoFisik" type="file" accept="image/*" capture="environment" class="hidden" required />
+                        </label>
+                    </div>
+                    <div class="flex justify-between items-center mt-2">
+                        <p class="text-[10px] text-zinc-400 font-medium uppercase tracking-wide">Format: JPG/PNG</p>
+                        <button type="button" id="retakeBtn" class="hidden text-xs text-zinc-700 font-medium bg-white border border-zinc-200 px-3 py-1.5 rounded-md hover:bg-zinc-50 active:scale-[0.95] transition-all">Ulangi Foto</button>
+                    </div>
+                    <!-- Hidden field to store base64 image -->
+                    <input type="hidden" id="fotoBase64" name="fotoBase64">
+                </div>
+            </div>
+
+            <!-- Tombol Next (Muncul setelah foto) -->
+            <div id="nextBtnContainer" class="mt-6 mb-4 hidden">
+                <button type="button" id="btnNextForm" class="w-full bg-black hover:bg-zinc-800 active:bg-zinc-900 text-white font-medium text-sm py-3.5 rounded-xl shadow-sm flex justify-center items-center transition-all">
+                    Lanjutkan <i class="fas fa-arrow-right ml-2 text-xs"></i>
+                </button>
+            </div>
+
+            <!-- Form Remaks Dead Stock -->
+            <div id="remaksSection" class="form-section hidden">
+                <h3 class="font-semibold text-zinc-900 mb-4 border-b border-zinc-100 pb-3 text-sm flex items-center gap-2"><i class="fas fa-box-open text-zinc-400"></i> Detail Dead Stock</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-700">REMAKS DEAD STOCK 2021</label>
+                        <input type="text" id="remaks2021" name="remaks2021" class="input-field">
+                    </div>
+                    <div class="relative">
+                        <label class="block text-sm font-medium text-zinc-700">Qty REMAKS DEAD STOCK 2021</label>
+                        <input type="number" id="qtyRemaks2021" name="qtyRemaks2021" class="input-field" data-locked="false">
+                        <p id="alarmQty2021" class="text-[10px] text-red-500 mt-1 font-medium hidden">Target Alarm: <span id="valAlarmQty2021" class="font-bold"></span></p>
+                    </div>
+                    <!-- Kolom BIN NEW Segregasi 2021 -->
+                    <div id="binNew2021Group" class="hidden p-3 bg-zinc-50 border border-zinc-200 rounded-lg">
+                        <label class="block text-xs font-semibold text-zinc-700 mb-1">Kolom BIN NEW (Segregasi 2021)</label>
+                        <select id="binNewSegregasi2021" name="binNewSegregasi2021" class="input-field !mt-0 py-2">
+                            <option value="">-- Pilih Box --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="pt-2 border-t border-zinc-100"></div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-700">REMAKS DEAD STOCK 2023</label>
+                        <input type="text" id="remaks2023" name="remaks2023" class="input-field">
+                    </div>
+                    <div class="relative">
+                        <label class="block text-sm font-medium text-zinc-700">Qty REMAKS DEAD STOCK 2023</label>
+                        <input type="number" id="qtyRemaks2023" name="qtyRemaks2023" class="input-field" data-locked="false">
+                        <p id="alarmQty2023" class="text-[10px] text-red-500 mt-1 font-medium hidden">Target Alarm: <span id="valAlarmQty2023" class="font-bold"></span></p>
+                    </div>
+                    <!-- Kolom BIN NEW Segregasi 2023 -->
+                    <div id="binNew2023Group" class="hidden p-3 bg-zinc-50 border border-zinc-200 rounded-lg">
+                        <label class="block text-xs font-semibold text-zinc-700 mb-1">Kolom BIN NEW (Segregasi 2023)</label>
+                        <select id="binNewSegregasi2023" name="binNewSegregasi2023" class="input-field !mt-0 py-2">
+                            <option value="">-- Pilih Box --</option>
+                        </select>
+                    </div>
+
+                    <div class="pt-2 border-t border-zinc-100"></div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-700">Qty Part NON SOH SITE CLOSING</label>
+                        <input type="number" id="qtyPartNonSohClosing" name="qtyPartNonSohClosing" class="input-field">
+                    </div>
+                    <!-- Khusus Box -->
+                    <div id="packingToBoxGroup">
+                        <label class="block text-sm font-medium text-zinc-700">Khusus Box</label>
+                        <select id="packingToBox" name="packingToBox" class="input-field">
+                            <option value="">-- Pilih Box NSOH --</option>
+                            <!-- Options generated via JS -->
+                        </select>
+                    </div>
+                    
+                    <div class="pt-2">
+                        <label class="block text-sm font-medium text-zinc-700">Total Qty Akhir</label>
+                        <input type="number" id="totalQtyAkhir" name="totalQtyAkhir" class="input-field bg-zinc-50 text-zinc-900 font-bold border-zinc-300" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button (Dihidden di awal, muncul setelah Next) -->
+            <div id="submitBtnContainer" class="mt-6 mb-10 hidden">
+                <button type="submit" id="submitBtn" class="w-full bg-black hover:bg-zinc-800 active:bg-zinc-900 active:scale-[0.98] text-white font-medium text-sm py-3.5 rounded-xl shadow-md flex justify-center items-center transition-all">
+                    Submit Data Inspeksi
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <!-- Modal Peringatan Duplikasi / Pilihan Revisi -->
+    <div id="duplicateModal" class="fixed inset-0 glass-modal z-[160] hidden flex justify-center items-center p-4">
+        <div class="bg-white p-6 rounded-2xl max-w-sm w-full shadow-xl border border-zinc-200 transform scale-100 transition-all">
+            <div class="w-12 h-12 bg-zinc-100 rounded-full flex items-center justify-center mb-4">
+                <i class="fas fa-history text-lg text-zinc-800"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-zinc-900 mb-2">Material Sudah Terinput</h3>
+            <p class="text-zinc-500 text-sm leading-relaxed mb-5">
+                Material <span id="dupMaterialCode" class="font-bold text-zinc-900"></span> terdeteksi sudah pernah diinput sebelumnya.
+                <span class="block mt-3 text-xs bg-zinc-50 border border-zinc-100 p-3 rounded-lg text-zinc-700 font-mono space-y-1">
+                    <span>• Qty Cycle Count: <span id="dupQtyCycleCount" class="font-bold text-zinc-900"></span></span><br>
+                    <span>• Actual Final: <span id="dupActualFinal" class="font-bold text-zinc-900"></span></span><br>
+                    <span>• Packing Box: <span id="dupPackingToBox" class="font-bold text-zinc-900"></span></span>
+                </span>
+                <span class="block mt-4 text-xs font-medium text-zinc-600">Pilih tindakan selanjutnya:</span>
+            </p>
+            <div class="space-y-2">
+                <button type="button" id="btnModeRevisi" class="w-full bg-black hover:bg-zinc-800 text-white font-medium py-2.5 rounded-lg transition-all text-sm">
+                    Revisi Data Lama
+                </button>
+                <button type="button" id="btnModeBaru" class="w-full bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-800 font-medium py-2.5 rounded-lg transition-all text-sm">
+                    Input Baris Baru
+                </button>
+                <button type="button" id="btnCancelDuplicate" class="w-full bg-transparent text-zinc-500 hover:text-zinc-800 font-medium py-2 rounded-lg transition-all text-sm mt-1">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Alarm POP UP -->
+    <div id="alarmPopupModal" class="fixed inset-0 glass-modal z-[160] hidden flex justify-center items-center p-4">
+        <div class="bg-white p-6 rounded-2xl max-w-sm w-full text-center shadow-xl border border-zinc-200">
+            <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-lg text-red-500"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-zinc-900 mb-2">Peringatan Qty</h3>
+            <p id="alarmPopupMsg" class="text-zinc-600 text-sm leading-relaxed mb-6">
+                Masukan Sisa Stock ke Box Part Non SOH 2026
+            </p>
+            <button type="button" onclick="document.getElementById('alarmPopupModal').classList.add('hidden')" class="w-full bg-black hover:bg-zinc-800 text-white font-medium py-2.5 rounded-lg transition-all text-sm">
+                Mengerti
+            </button>
+        </div>
+    </div>
+
+    <!-- Overlay Loading -->
+    <div id="loadingOverlay" class="fixed inset-0 glass-modal z-[150] hidden flex-col justify-center items-center text-white">
+        <i class="fas fa-circle-notch fa-spin text-4xl mb-4 text-white/80"></i>
+        <p class="font-medium text-lg tracking-tight">Sinkronisasi Data</p>
+        <p class="text-xs text-white/60 mt-1">Menyimpan ke sistem Cloud...</p>
+    </div>
+
+    <!-- Modal Success -->
+    <div id="successModal" class="fixed inset-0 glass-modal z-[150] hidden flex justify-center items-center p-4">
+        <div class="bg-white p-8 rounded-2xl max-w-sm w-full text-center shadow-xl border border-zinc-200">
+            <div class="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-5">
+                <i class="fas fa-check text-2xl text-emerald-500"></i>
+            </div>
+            <h3 class="text-xl font-bold text-zinc-900 mb-2">Berhasil</h3>
+            <p class="text-zinc-500 text-sm leading-relaxed">Data telah tersimpan ke sistem.<br><span class="text-xs mt-2 block text-zinc-400">Formulir direset otomatis...</span></p>
+        </div>
+    </div>
+
+    <script>
+        // Logika Javascript 100% TIDAK DIUBAH (Hanya styling string class diganti ke standar baru)
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxHjiJ7eu5YBjLufOlaiJeq7V-nV86PYzJUbjXt6l6CIHwgInwvca0dzDZToOYkWNNx/exec'; 
+        const CSV_MASTER_DATA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSZRIPSRmOWCiV4EjT0GdROSGHONC5dAfRzDCJdxn0HM0b5hXFastfll9wphlShIrdh8B2DH1n0MEgZ/pub?gid=1296861980&single=true&output=csv';
+        const CSV_ANALISA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ89SrRMBq0EYLeMFFTMAWbhVl-pzj4x9xZjW73nRw4FCTdIOGYplmkpHkKaf3VRRVnlqGjQWb8fcet/pub?gid=909242961&single=true&output=csv';
+        const CSV_SUBMITTED_URL = 'https://docs.google.com/spreadsheets/d/1RHIMLyk6kSONUZPsd1O--bz1c96IPDt9Z4pZd_2ZJw4/export?format=csv&gid=984194627';
+        const CSV_PRICE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ89SrRMBq0EYLeMFFTMAWbhVl-pzj4x9xZjW73nRw4FCTdIOGYplmkpHkKaf3VRRVnlqGjQWb8fcet/pub?gid=247161967&single=true&output=csv';
+        const CSV_MB52_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ89SrRMBq0EYLeMFFTMAWbhVl-pzj4x9xZjW73nRw4FCTdIOGYplmkpHkKaf3VRRVnlqGjQWb8fcet/pub?gid=2011878581&single=true&output=csv';
+
+        const masterDataMap = new Map();
+        const masterMpnMap = new Map();
+        const priceDataMap = new Map();
+        const mb52DataMap = new Map();
+        const submittedDataMap = new Map();
+        const cachedAnalisaMap = new Map();
+
+        let masterDataIndices = { mat: 0, desc: 1, mpn: 2, box: 3, uom: 4, bin: 5, rem: 6, val: 7, over: 8, rem21: -1, rem23: -1, qtyDs21: -1, qtyDs23: -1 };
+
+        window.sessionSubmittedData = {};
+        window.submitMode = 'baru';
+        let cachedSubmittedData = null;
+        let currentMaterialPrice = 0;
+        let currentTotalUnrestricted = 0; 
+        let cachedMasterData = null; 
+        let cachedAnalisaData = null;
+        let cachedPriceData = null;
+        let cachedMb52Data = null;
+        let currentUserRole = '';
+        let currentPicName = '';
+
+        const loginScreen = document.getElementById('loginScreen');
+        const loginPicName = document.getElementById('loginPicName');
+        const loginPassword = document.getElementById('loginPassword');
+        const btnLogin = document.getElementById('btnLogin');
+        const loginError = document.getElementById('loginError');
+        const loginErrorMsg = document.getElementById('loginErrorMsg');
+        const appHeader = document.getElementById('appHeader');
+        const mainApp = document.getElementById('mainApp');
+        const roleBadge = document.getElementById('roleBadge');
+        const btnLogout = document.getElementById('btnLogout');
+        const formObj = document.getElementById('inspeksiForm');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const successModal = document.getElementById('successModal');
+        const btnCekStatus = document.getElementById('btnCekStatus');
+        const materialNumberInput = document.getElementById('materialNumber');
+        const suggestionBox = document.getElementById('suggestionBox');
+        const actualFinalInput = document.getElementById('actualFinal');
+        const qtyCycleCountInput = document.getElementById('qtyCycleCount');
+        const packingToBoxSelect = document.getElementById('packingToBox');
+        const btnGoToExport = document.getElementById('btnGoToExport');
+        const btnGoToForm = document.getElementById('btnGoToForm');
+        const btnMenuLogout = document.getElementById('btnMenuLogout');
+        const tglCycleCountInput = document.getElementById('tglCycleCount');
+        const fotoInput = document.getElementById('fotoFisik');
+        const imagePreview = document.getElementById('imagePreview');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        const fotoBase64Input = document.getElementById('fotoBase64');
+        const retakeBtn = document.getElementById('retakeBtn');
+        const btnCancelDuplicate = document.getElementById('btnCancelDuplicate');
+        const btnModeRevisi = document.getElementById('btnModeRevisi');
+        const btnModeBaru = document.getElementById('btnModeBaru');
+        const btnResetMode = document.getElementById('btnResetMode');
+        const stockInfoFeedback = document.getElementById('stockInfoFeedback');
+        const stockInfoValue = document.getElementById('stockInfoValue');
+        const stockInfoUom = document.getElementById('stockInfoUom');
+        const stockInfoBins = document.getElementById('stockInfoBins');
+
+        const pelaksanaInput = document.getElementById('pelaksana');
+        const descriptionInput = document.getElementById('description');
+        const partNumberInput = document.getElementById('partNumber');
+        const uomInput = document.getElementById('uom');
+        const boxPackingInput = document.getElementById('boxPacking');
+        const storageBinInput = document.getElementById('storageBin');
+        const remarksInput = document.getElementById('remarks');
+        const totalValueInput = document.getElementById('totalValue');
+        const overStockInput = document.getElementById('overStock');
+        const materialTypeInput = document.getElementById('materialType');
+        const terdaftarNonSohInput = document.getElementById('terdaftarNonSoh');
+        const qtyNonSohInput = document.getElementById('qtyNonSoh');
+        const siteDiskrepansiInput = document.getElementById('siteDiskrepansi');
+        const qtyDiskrepansiInput = document.getElementById('qtyDiskrepansi');
+        const tindakanInput = document.getElementById('tindakan');
+        const qtyTindakanInput = document.getElementById('qtyTindakan');
+        const alarmInput = document.getElementById('alarm');
+
+        const statusIndicator = document.getElementById('statusIndicator');
+        const mb52Card = document.getElementById('mb52InfoCard');
+        const duplicateModal = document.getElementById('duplicateModal');
+
+        function setTglCycleCountWITA() {
+            const el = document.getElementById('tglCycleCount');
+            if (el) {
+                const date = new Date();
+                const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
+                const witaDate = new Date(utc + (3600000 * 8)); 
+                const yyyy = witaDate.getFullYear();
+                const mm = String(witaDate.getMonth() + 1).padStart(2, '0');
+                const dd = String(witaDate.getDate()).padStart(2, '0');
+                el.value = `${yyyy}-${mm}-${dd}`;
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toastNotification');
+            const toastMsg = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+            
+            if (toastMsg) toastMsg.textContent = message;
+            
+            toastIcon.className = 'fas text-white text-xs';
+            if (type === 'error') {
+                toastIcon.classList.add('fa-exclamation');
+                toastIcon.parentElement.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-red-500 shrink-0';
+            } else if (type === 'success') {
+                toastIcon.classList.add('fa-check');
+                toastIcon.parentElement.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-emerald-500 shrink-0';
+            } else {
+                toastIcon.classList.add('fa-info');
+                toastIcon.parentElement.className = 'w-5 h-5 rounded-full flex items-center justify-center bg-zinc-700 shrink-0';
+            }
+            
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.style.transform = 'translate(-50%, 10px)';
+            toast.classList.add('opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.style.transform = 'translate(-50%, -10px)';
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3500);
+        }
+
+        function loadCSV(url) {
+            return new Promise((resolve, reject) => {
+                Papa.parse(url, {
+                    download: true,
+                    header: false,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        resolve(results.data);
+                    },
+                    error: function(err) {
+                        fetch(url)
+                            .then(res => {
+                                if (!res.ok) throw new Error('HTTP error ' + res.status);
+                                return res.text();
+                            })
+                            .then(text => {
+                                Papa.parse(text, {
+                                    header: false,
+                                    skipEmptyLines: true,
+                                    complete: function(results) {
+                                        resolve(results.data);
+                                    },
+                                    error: function(err2) {
+                                        reject(err2);
+                                    }
+                                });
+                            })
+                            .catch(fetchErr => {
+                                reject(err || fetchErr);
+                            });
+                    }
+                });
+            });
+        }
+
+        function compressImage(file, maxWidth, maxHeight, quality) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > maxWidth) {
+                                height = Math.round((height * maxWidth) / width);
+                                width = maxWidth;
+                            }
+                        } else {
+                            if (height > maxHeight) {
+                                width = Math.round((width * maxHeight) / height);
+                                height = maxHeight;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        const base64 = dataUrl.split(',')[1];
+                        resolve(base64);
+                    };
+                    img.onerror = function(err) {
+                        reject(err);
+                    };
+                };
+                reader.onerror = function(err) {
+                    reject(err);
+                };
+            });
+        }
+
+        function resetCameraUI() {
+            if (imagePreview && imagePreview.src && imagePreview.src.startsWith('blob:')) {
+                URL.revokeObjectURL(imagePreview.src);
+            }
+            if(fotoInput) fotoInput.value = '';
+            if(fotoBase64Input) fotoBase64Input.value = '';
+            if(imagePreview) imagePreview.classList.add('hidden');
+            if(uploadPlaceholder) uploadPlaceholder.classList.remove('hidden');
+            if(retakeBtn) retakeBtn.classList.add('hidden');
+        }
+
+        function indexMasterData(data) {
+            masterDataMap.clear();
+            masterMpnMap.clear();
+            if (!data || !Array.isArray(data) || data.length === 0) return;
+
+            const headers = data[0];
+            for (let c = 0; c < headers.length; c++) {
+                const hRaw = headers[c] ? headers[c].toString().trim().toUpperCase() : '';
+                const h = hRaw.replace(/\s+/g, ' '); 
+                
+                if (h === 'MATERIAL') masterDataIndices.mat = c;
+                if (h === 'MATERIAL DESCRIPTION') masterDataIndices.desc = c;
+                if (h === 'MFR PART NUMBER') masterDataIndices.mpn = c;
+                if (h === 'BOX PACKING') masterDataIndices.box = c;
+                if (h === 'BASE UNIT OF MEASURE') masterDataIndices.uom = c;
+                if (h === 'STORAGE BIN') masterDataIndices.bin = c;
+                if (h === 'REMARKS') masterDataIndices.rem = c;
+                if (h === 'TOTAL VALUE') masterDataIndices.val = c;
+                if (h === 'OVER STOCK') masterDataIndices.over = c;
+                if (h === 'REMAKS DEAD STOCK 2021') masterDataIndices.rem21 = c;
+                if (h === 'REMAKS DEAD STOCK 2023') masterDataIndices.rem23 = c;
+                if (h === 'QTY DS 2021') masterDataIndices.qtyDs21 = c;
+                if (h === 'QTY DS 2023') masterDataIndices.qtyDs23 = c;
+            }
+
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (!row) continue;
+                const matNum = row[masterDataIndices.mat] ? row[masterDataIndices.mat].toString().trim().toUpperCase() : '';
+                const cleanMatNum = matNum.replace(/^0+/, ''); 
+                const mpnVal = row[masterDataIndices.mpn] ? row[masterDataIndices.mpn].toString().trim().toUpperCase() : '';
+                if (matNum) {
+                    masterDataMap.set(matNum, row);
+                    masterDataMap.set(cleanMatNum, row); 
+                }
+                if (mpnVal) masterMpnMap.set(mpnVal, row);
+            }
+        }
+
+        function renderStockInfoFeedback(matCode, uomVal) {
+            if (!stockInfoFeedback || !stockInfoValue) return;
+            
+            const cleanMat = matCode.toString().trim().toUpperCase().replace(/^0+/, '');
+            const rowsMb52 = mb52DataMap.get(cleanMat) || mb52DataMap.get(matCode) || [];
+            
+            if (rowsMb52.length > 0) {
+                let totalQty = 0;
+                let bins = [];
+                
+                rowsMb52.forEach(item => {
+                    const row = item.row;
+                    const bin = row[item.binIdx] ? row[item.binIdx].trim() : '';
+                    const unrestrictedStr = row[item.unrestrictedIdx] ? row[item.unrestrictedIdx].trim() : '0';
+                    
+                    let qty = 0;
+                    if (unrestrictedStr !== '-' && unrestrictedStr !== '') {
+                        let cleanStr = unrestrictedStr.replace(/\s/g, '');
+                        if (cleanStr.includes('.') && cleanStr.lastIndexOf('.') > cleanStr.lastIndexOf(',')) {
+                            qty = parseFloat(cleanStr.replace(/,/g, '')) || 0;
+                        } else {
+                            qty = parseFloat(cleanStr.replace(/\./g, '').replace(',', '.')) || 0;
+                        }
+                    }
+                    totalQty += qty;
+                    if (bin && bin !== '-' && bin !== '') bins.push(bin);
+                });
+                
+                stockInfoValue.textContent = totalQty.toLocaleString('id-ID');
+                if (stockInfoUom) stockInfoUom.textContent = uomVal || '';
+                if (stockInfoBins) {
+                    stockInfoBins.textContent = bins.length > 0 
+                        ? `Lokasi BIN: ${[...new Set(bins)].join(', ')}` 
+                        : 'Lokasi BIN: -';
+                }
+                stockInfoFeedback.classList.remove('hidden');
+            } else {
+                stockInfoValue.textContent = '0';
+                if (stockInfoUom) stockInfoUom.textContent = uomVal || '';
+                if (stockInfoBins) stockInfoBins.textContent = 'Lokasi BIN: - (Part non SOH Baru)';
+                stockInfoFeedback.classList.remove('hidden');
+            }
+        }
+
+        function indexAnalisaData(data) {
+            cachedAnalisaMap.clear();
+            if (!data || !Array.isArray(data) || data.length <= 1) return;
+            
+            let idxTer = 1, idxQtyN = 2, idxSite = 3, idxQtyD = 4, idxTin = 5, idxQtyT = 6, idxAlrm = 7;
+            const headers = data[0];
+            for (let c = 0; c < headers.length; c++) {
+                const h = headers[c] ? headers[c].toString().trim().toUpperCase() : '';
+                if (h === 'TERDAFTAR NON SOH' || h === 'TERDAFTAR') idxTer = c;
+                if (h === 'QTY NON SOH' || h === 'QTY NON') idxQtyN = c;
+                if (h === 'SITE DISKREPANSI' || h === 'SITE') idxSite = c;
+                if (h === 'QTY DISKREPANSI') idxQtyD = c;
+                if (h === 'TINDAKAN' || h.includes('TINDAKAN')) idxTin = c;
+                if (h === 'QTY TINDAKAN') idxQtyT = c;
+                if (h === 'ALARM') idxAlrm = c;
+            }
+
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (!row) continue;
+                const mat = row[0] ? row[0].toString().trim().toUpperCase() : '';
+                const cleanMat = mat.replace(/^0+/, '');
+                if (mat) {
+                    const obj = {
+                        row: row,
+                        idxTer: idxTer,
+                        idxQtyN: idxQtyN,
+                        idxSite: idxSite,
+                        idxQtyD: idxQtyD,
+                        idxTin: idxTin,
+                        idxQtyT: idxQtyT,
+                        idxAlrm: idxAlrm
+                    };
+                    cachedAnalisaMap.set(mat, obj);
+                    cachedAnalisaMap.set(cleanMat, obj); 
+                }
+            }
+        }
+
+        function indexPriceData(data) {
+            priceDataMap.clear();
+            if (!data || !Array.isArray(data) || data.length <= 1) return;
+            let matIdx = 0, priceIdx = 4;
+            const headers = data[0];
+            for (let c = 0; c < headers.length; c++) {
+                const h = headers[c] ? headers[c].toString().trim().toUpperCase() : '';
+                if (h === 'MATERIAL' || h === 'MATERIAL NUMBER') matIdx = c;
+                if (h === 'PRICE' || h.includes('PRICE')) priceIdx = c;
+            }
+
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (!row) continue;
+                const mat = row[matIdx] ? row[matIdx].toString().trim().toUpperCase() : '';
+                const cleanMat = mat.replace(/^0+/, '');
+                if (mat) {
+                    let raw = row[priceIdx] ? row[priceIdx].toString().trim() : '';
+                    let priceVal = 0;
+                    if (raw !== '') {
+                        if (raw.includes('.') && raw.lastIndexOf('.') > raw.lastIndexOf(',')) {
+                            priceVal = parseFloat(raw.replace(/,/g, ''));
+                        } else {
+                            priceVal = parseFloat(raw.replace(/\./g, '').replace(',', '.'));
+                        }
+                    }
+                    priceDataMap.set(mat, priceVal);
+                    priceDataMap.set(cleanMat, priceVal); 
+                }
+            }
+        }
+
+        function indexMb52Data(data) {
+            mb52DataMap.clear();
+            if (!data || !Array.isArray(data) || data.length <= 1) return;
+            let matIdx = 0;
+            let slocIdx = 7, binIdx = 8, unrestrictedIdx = 11;
+            const headers = data[0];
+            let exactUnrestrictedFound = false;
+            for (let c = 0; c < headers.length; c++) {
+                const h = headers[c] ? headers[c].toString().trim().toUpperCase() : '';
+                if (h === 'MATERIAL' || h === 'MATERIAL NUMBER' || h === 'MATNR') matIdx = c;
+                if (h === 'STORAGE LOCATION' || h.includes('STORAGE LOCATION') || h === 'LGORT' || h === 'SLOC') slocIdx = c;
+                if (h === 'STORAGE BIN' || h.includes('STORAGE BIN') || h === 'LGPBE' || h === 'BIN') binIdx = c;
+                
+                if (h === 'UNRESTRICTED' || h === 'LABST' || h === 'UNRESTRICTED-USE' || h === 'UNRESTRICTED-USE STOCK') {
+                    unrestrictedIdx = c;
+                    exactUnrestrictedFound = true;
+                } else if (!exactUnrestrictedFound && h.includes('UNRESTRICTED') && !h.includes('VALUE') && !h.includes('VAL') && !h.includes('PRICE') && !h.includes('NILAI')) {
+                    unrestrictedIdx = c;
+                } else if (!exactUnrestrictedFound && (h === 'STOCK' || h === 'STOK')) {
+                    unrestrictedIdx = c;
+                }
+            }
+
+            if (unrestrictedIdx === 13) {
+                unrestrictedIdx = 11;
+            }
+
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (!row) continue;
+                const mat = row[matIdx] ? row[matIdx].toString().trim().toUpperCase() : '';
+                const cleanMat = mat.replace(/^0+/, '');
+                if (mat) {
+                    const item = {
+                        row: row,
+                        slocIdx: slocIdx,
+                        binIdx: binIdx,
+                        unrestrictedIdx: unrestrictedIdx
+                    };
+                    if (!mb52DataMap.has(mat)) {
+                        mb52DataMap.set(mat, []);
+                    }
+                    mb52DataMap.get(mat).push(item);
+                    
+                    if (cleanMat !== mat) {
+                        if (!mb52DataMap.has(cleanMat)) {
+                            mb52DataMap.set(cleanMat, []);
+                        }
+                        mb52DataMap.get(cleanMat).push(item); 
+                    }
+                }
+            }
+        }
+
+        function indexSubmittedData(data) {
+            submittedDataMap.clear();
+            if (!data || !Array.isArray(data) || data.length <= 1) return;
+            
+            let matIdx = 3; 
+            let actFinalIdx = 16; 
+            let packBoxIdx = 19;  
+            let qtyCycleIdx = 15; 
+            let binKalIdx = -1;
+            let binAsalIdx = -1;
+            let binTujIdx = -1;
+            let totalQtyIdx = -1;
+            let qtyNonSoh2026Idx = -1;
+            let boxNonSoh2026Idx = -1;
+            let qty21Indices = [];
+            let qty23Indices = [];
+            
+            const headers = data[0];
+            for (let c = 0; c < headers.length; c++) {
+                const hTextRaw = headers[c] ? headers[c].toString().trim().toUpperCase() : '';
+                const hText = hTextRaw.replace(/\s+/g, ' '); 
+                
+                if (hText === 'MATERIAL' || hText === 'MATERIAL NUMBER' || hText === 'MATERIAL CODE' || hText === 'ITEM') matIdx = c;
+                if (hText === 'ACTUAL FINAL NON SOH' || hText === 'ACTUAL FINAL' || hText.includes('ACTUAL FINAL')) actFinalIdx = c;
+                if (hText === 'PACKING TO BOX' || hText === 'PACKING BOX' || hText === 'BOX') packBoxIdx = c;
+                if (hText === 'ACTUAL FISIK CYCLE COUNT' || hText === 'ACTUAL FISIK' || hText === 'QTY FISIK' || hText.includes('CYCLE COUNT') || hText.includes('FISIK')) qtyCycleIdx = c;
+                if (hText.includes('KALIBRASI BIN') || hText.includes('BIN KALIBRASI')) binKalIdx = c;
+                if (hText === 'BIN ASAL') binAsalIdx = c;
+                if (hText === 'BIN TUJUAN') binTujIdx = c;
+                if (hText === 'TOTAL QTY AKHIR' || hText === 'TOTAL QTY') totalQtyIdx = c;
+                if (hText === 'QTY PART NON SOH 2026 1' || hText === 'QTY PART NON SOH 2026') qtyNonSoh2026Idx = c;
+                if (hText === 'BOX  PART NON SOH 2026 1' || hText === 'BOX PART NON SOH 2026 1' || hText === 'BOX PART NON SOH 2026') boxNonSoh2026Idx = c;
+                
+                if (hText.includes('QTY PART DEAD STOCK 2021')) qty21Indices.push(c);
+                if (hText.includes('QTY PART DEAD STOCK 2023')) qty23Indices.push(c);
+            }
+
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (!row) continue;
+                let cellVal = row[matIdx] ? row[matIdx].toString().trim().toUpperCase() : '';
+                if (cellVal.startsWith("'")) cellVal = cellVal.substring(1);
+                
+                const cleanCellVal = cellVal.replace(/^0+/, '');
+
+                if (cellVal) {
+                    let sumQty21 = 0;
+                    qty21Indices.forEach(idx => {
+                        let val = parseFloat(row[idx]);
+                        if (!isNaN(val)) sumQty21 += val;
+                    });
+
+                    let sumQty23 = 0;
+                    qty23Indices.forEach(idx => {
+                        let val = parseFloat(row[idx]);
+                        if (!isNaN(val)) sumQty23 += val;
+                    });
+
+                    const obj = {
+                        actualFinal: row[actFinalIdx] ? row[actFinalIdx].toString().trim() : '0',
+                        packingToBox: row[packBoxIdx] ? row[packBoxIdx].toString().trim() : '',
+                        qtyCycleCount: row[qtyCycleIdx] ? row[qtyCycleIdx].toString().trim() : '0',
+                        binKalibrasi: binKalIdx !== -1 && row[binKalIdx] ? row[binKalIdx].toString().trim() : '',
+                        binAsal: binAsalIdx !== -1 && row[binAsalIdx] ? row[binAsalIdx].toString().trim() : '',
+                        binTujuan: binTujIdx !== -1 && row[binTujIdx] ? row[binTujIdx].toString().trim() : '',
+                        totalQty: totalQtyIdx !== -1 && row[totalQtyIdx] ? row[totalQtyIdx].toString().trim() : '0',
+                        qtyPartNonSoh2026: qtyNonSoh2026Idx !== -1 && row[qtyNonSoh2026Idx] ? row[qtyNonSoh2026Idx].toString().trim() : '0',
+                        boxPartNonSoh2026: boxNonSoh2026Idx !== -1 && row[boxNonSoh2026Idx] ? row[boxNonSoh2026Idx].toString().trim() : '',
+                        qty21: sumQty21,
+                        qty23: sumQty23
+                    };
+                    submittedDataMap.set(cellVal, obj);
+                    submittedDataMap.set(cleanCellVal, obj); 
+                }
+            }
+        }
+
+        function calculateFinalisasiValue() {
+            if (!actualFinalInput) return;
+            const qty = parseFloat(actualFinalInput.value) || 0;
+            const price = currentMaterialPrice || 0;
+            const finalField = document.getElementById('finalisasiValue');
+            
+            if (finalField) {
+                if (qty > 0 && price > 0) {
+                    finalField.value = qty * price;
+                } else {
+                    finalField.value = '';
+                }
+            }
+        }
+
+        function calculateActualFinal() {
+            if (!qtyCycleCountInput) return;
+            const cycleCount = parseFloat(qtyCycleCountInput.value) || 0;
+            let actualFinalVal = 0;
+
+            if (currentTotalUnrestricted === 0) {
+                actualFinalVal = cycleCount; 
+            } else {
+                actualFinalVal = cycleCount - currentTotalUnrestricted;
+                if (actualFinalVal < 0) {
+                    actualFinalVal = 0; 
+                }
+            }
+            
+            if (actualFinalInput) actualFinalInput.value = actualFinalVal;
+
+            calculateFinalisasiValue();
+        }
+
+        function checkDuplicateInInspections(matNum) {
+            if (!matNum) return;
+            const searchMatNum = matNum.toString().trim().toUpperCase().replace(/^0+/, ''); 
+            let duplicateRow = null;
+
+            if (window.sessionSubmittedData && window.sessionSubmittedData[searchMatNum]) {
+                duplicateRow = window.sessionSubmittedData[searchMatNum];
+            } 
+            else if (submittedDataMap && submittedDataMap.has(searchMatNum)) {
+                duplicateRow = submittedDataMap.get(searchMatNum);
+            }
+
+            if (duplicateRow) {
+                const elMatCode = document.getElementById('dupMaterialCode');
+                const elQtyCycle = document.getElementById('dupQtyCycleCount');
+                const elActFinal = document.getElementById('dupActualFinal');
+                const elPackBox = document.getElementById('dupPackingToBox');
+                
+                if (elMatCode) elMatCode.textContent = searchMatNum;
+                if (elQtyCycle) elQtyCycle.textContent = duplicateRow.qtyCycleCount || '0';
+                if (elActFinal) elActFinal.textContent = duplicateRow.actualFinal || '-';
+                if (elPackBox) elPackBox.textContent = duplicateRow.packingToBox || '-';
+                
+                window.currentDuplicateData = duplicateRow;
+                
+                const dModal = document.getElementById('duplicateModal');
+                if (dModal) dModal.classList.remove('hidden');
+            }
+        }
+
+        function setupRoleUI(role) {
+            if (loginScreen) {
+                loginScreen.classList.add('hidden');
+                loginScreen.classList.remove('flex');
+            }
+            const menuScreen = document.getElementById('menuScreen');
+            if (menuScreen) {
+                menuScreen.classList.remove('hidden');
+                menuScreen.classList.add('flex');
+            }
+            const menuPicName = document.getElementById('menuPicName');
+            if (menuPicName) menuPicName.textContent = currentPicName;
+            if (roleBadge) roleBadge.textContent = role;
+            if (pelaksanaInput) pelaksanaInput.value = currentPicName;
+
+            if (!cachedSubmittedData && CSV_SUBMITTED_URL) {
+                loadCSV(CSV_SUBMITTED_URL + '&t=' + new Date().getTime()).then(data => {
+                    cachedSubmittedData = data;
+                    indexSubmittedData(data);
+                }).catch(e => console.warn(e));
+            }
+            if (!cachedMasterData && CSV_MASTER_DATA_URL) {
+                loadCSV(CSV_MASTER_DATA_URL).then(data => {
+                    cachedMasterData = data;
+                    indexMasterData(data);
+                }).catch(e => console.warn(e));
+            }
+            if (!cachedPriceData && CSV_PRICE_URL) {
+                loadCSV(CSV_PRICE_URL).then(data => {
+                    cachedPriceData = data;
+                    indexPriceData(cachedPriceData);
+                }).catch(e => console.warn(e));
+            }
+            if (!cachedMb52Data && CSV_MB52_URL) {
+                loadCSV(CSV_MB52_URL).then(data => {
+                    cachedMb52Data = data;
+                    indexMb52Data(cachedMb52Data);
+                }).catch(e => console.warn(e));
+            }
+        }
+
+        function attemptLogin() {
+            if (!loginPicName || !loginPassword) return;
+            const pic = loginPicName.value.trim();
+            const pwd = loginPassword.value;
+
+            if (!pic) {
+                if (loginErrorMsg) loginErrorMsg.textContent = "Pilih Nama PIC";
+                if (loginError) loginError.classList.remove('hidden');
+                loginPicName.classList.add('translate-x-1', 'border-red-500', 'bg-red-50');
+                setTimeout(() => loginPicName.classList.remove('translate-x-1'), 100);
+                return;
+            }
+
+            if (pwd === '1122') {
+                currentUserRole = 'Logistik';
+                currentPicName = pic;
+                setupRoleUI(currentUserRole);
+            } else {
+                if (loginErrorMsg) loginErrorMsg.textContent = "Kata sandi salah!";
+                if (loginError) loginError.classList.remove('hidden');
+                loginPassword.classList.add('translate-x-1', 'border-red-500', 'bg-red-50');
+                setTimeout(() => loginPassword.classList.remove('translate-x-1'), 100);
+            }
+        }
+
+        if (btnLogout) {
+            btnLogout.addEventListener('click', function() {
+                if (mainApp) mainApp.classList.add('hidden');
+                if (appHeader) appHeader.classList.add('hidden');
+                if (menuScreen) {
+                    menuScreen.classList.remove('hidden');
+                    menuScreen.classList.add('flex');
+                }
+                
+                if (formObj) formObj.reset();
+                setTglCycleCountWITA();
+
+                if (partNumberInput) partNumberInput.removeAttribute('readonly');
+                if (boxPackingInput) boxPackingInput.removeAttribute('readonly');
+                if (uomInput) uomInput.removeAttribute('readonly');
+                if (storageBinInput) storageBinInput.removeAttribute('readonly');
+                if (remarksInput) remarksInput.removeAttribute('readonly');
+                if (totalValueInput) totalValueInput.removeAttribute('readonly');
+                if (overStockInput) overStockInput.removeAttribute('readonly');
+                const rem21El = document.getElementById('remaks2021');
+                const rem23El = document.getElementById('remaks2023');
+                const qtyRem21El = document.getElementById('qtyRemaks2021');
+                const qtyRem23El = document.getElementById('qtyRemaks2023');
+                if (rem21El) rem21El.removeAttribute('readonly');
+                if (rem23El) rem23El.removeAttribute('readonly');
+                if (qtyRem21El) { qtyRem21El.removeAttribute('readonly'); qtyRem21El.value = ''; qtyRem21El.dataset.locked = "false"; }
+                if (qtyRem23El) { qtyRem23El.removeAttribute('readonly'); qtyRem23El.value = ''; qtyRem23El.dataset.locked = "false"; }
+                if (materialTypeInput) materialTypeInput.removeAttribute('readonly');
+                if (terdaftarNonSohInput) terdaftarNonSohInput.removeAttribute('readonly');
+                if (qtyNonSohInput) qtyNonSohInput.removeAttribute('readonly');
+                if (siteDiskrepansiInput) siteDiskrepansiInput.removeAttribute('readonly');
+                if (qtyDiskrepansiInput) qtyDiskrepansiInput.removeAttribute('readonly');
+                if (tindakanInput) tindakanInput.removeAttribute('readonly');
+                if (qtyTindakanInput) qtyTindakanInput.removeAttribute('readonly');
+                if (alarmInput) alarmInput.removeAttribute('readonly');
+                if (packingToBoxSelect) {
+                    packingToBoxSelect.removeAttribute('readonly');
+                    packingToBoxSelect.removeAttribute('required');
+                }
+                if (statusIndicator) statusIndicator.classList.add('hidden');
+                if (mb52Card) mb52Card.classList.add('hidden');
+                if (stockInfoFeedback) stockInfoFeedback.classList.add('hidden');
+                
+                const infoPrev21 = document.getElementById('infoPrev21');
+                if (infoPrev21) infoPrev21.classList.add('hidden');
+                const infoPrev23 = document.getElementById('infoPrev23');
+                if (infoPrev23) infoPrev23.classList.add('hidden');
+                const infoPrevNonSoh = document.getElementById('infoPrevNonSoh');
+                if (infoPrevNonSoh) infoPrevNonSoh.classList.add('hidden');
+                const infoPrevBox = document.getElementById('infoPrevBox');
+                if (infoPrevBox) infoPrevBox.classList.add('hidden');
+                
+                if (document.getElementById('binNew2021Group')) document.getElementById('binNew2021Group').classList.add('hidden');
+                if (document.getElementById('binNew2023Group')) document.getElementById('binNew2023Group').classList.add('hidden');
+                
+                const prevQtyFeedback = document.getElementById('prevQtyFeedback');
+                if (prevQtyFeedback) prevQtyFeedback.classList.add('hidden');
+
+                if (pelaksanaInput) pelaksanaInput.value = currentPicName;
+                currentMaterialPrice = 0;
+                currentTotalUnrestricted = 0;
+                calculateActualFinal();
+                resetCameraUI();
+            });
+        }
+
+        if (btnLogin) btnLogin.addEventListener('click', attemptLogin);
+        if (loginPicName) {
+            loginPicName.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && loginPassword) loginPassword.focus();
+            });
+        }
+        if (loginPassword) {
+            loginPassword.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') attemptLogin();
+            });
+        }
+
+        if (btnGoToForm) {
+            btnGoToForm.addEventListener('click', function() {
+                if (menuScreen) {
+                    menuScreen.classList.add('hidden');
+                    menuScreen.classList.remove('flex');
+                }
+                if (appHeader) appHeader.classList.remove('hidden');
+                if (mainApp) mainApp.classList.remove('hidden');
+            });
+        }
+
+        if (btnMenuLogout) {
+            btnMenuLogout.addEventListener('click', function() {
+                const menuScreen = document.getElementById('menuScreen');
+                if (menuScreen) {
+                    menuScreen.classList.add('hidden');
+                    menuScreen.classList.remove('flex');
+                }
+                if (loginScreen) {
+                    loginScreen.classList.remove('hidden');
+                    loginScreen.classList.add('flex');
+                }
+                if (loginPassword) loginPassword.value = '';
+            });
+        }
+
+        if (btnGoToExport) {
+            btnGoToExport.addEventListener('click', async function() {
+                const btn = this;
+                const originalHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<div class="flex items-center justify-center gap-2"><i class="fas fa-spinner fa-spin"></i><span class="font-medium text-sm">Memproses...</span></div>';
+                
+                try {
+                    const rawCsvData = await loadCSV(CSV_SUBMITTED_URL + '&t=' + new Date().getTime());
+                    if (!rawCsvData || rawCsvData.length <= 1) {
+                        showToast("Tidak ada data inspeksi yang tersedia untuk diexport.", "error");
+                        return;
+                    }
+                    
+                    const sourceHeaders = rawCsvData[0].map(h => h ? h.toString().trim().toUpperCase() : '');
+                    const findIdx = (tokens) => sourceHeaders.findIndex(sh => tokens.some(t => sh === t || sh.includes(t)));
+
+                    const tsIdx = findIdx(['TIMESTAMP']);
+                    const tglIdx = findIdx(['TGL CYCLE COUNT', 'TGL CYCLE']);
+                    const pelIdx = findIdx(['PELAKSANA', 'PIC']);
+                    const matIdx = findIdx(['MATERIAL CODE', 'MATERIAL NUMBER', 'MATERIAL']);
+                    const descIdx = findIdx(['MATERIAL DESCRIPTION', 'DESCRIPTION']);
+                    const partIdx = findIdx(['PART NUMBER']);
+                    const uomIdx = findIdx(['UOM']);
+                    const typeIdx = findIdx(['MATERIAL TYPE']);
+                    const terNonSohIdx = findIdx(['TERDAFTAR NON SOH']);
+                    const qtyNonSohIdx = findIdx(['QTY NON SOH']);
+                    const siteDiskIdx = findIdx(['SITE DISKREPANSI', 'SITE DISKREPANCY']);
+                    const qtyDiskIdx = findIdx(['QTY DISKREPANSI', 'QTY DISKREPANCY']);
+                    const tindIdx = findIdx(['TINDAKAN']);
+                    const qtyTindIdx = findIdx(['QTY TINDAKAN']);
+                    const dcPalIdx = findIdx(['SOH DC PALARAN']);
+                    const fisikIdx = findIdx(['ACTUAL FISIK', 'CYCLE COUNT', 'QTY FISIK']);
+                    const finalIdx = findIdx(['ACTUAL FINAL NON SOH', 'ACTUAL FINAL']);
+                    const valIdx = findIdx(['FINALISASI VALUE']);
+                    const alrmIdx = findIdx(['ALARM']);
+                    const boxIdx = findIdx(['PACKING TO BOX', 'PACKING BOX', 'BOX']);
+                    const docIdx = findIdx(['DOKUMENTASI', 'FOTO']);
+                    const ccpIdx = findIdx(['LINK CCP']);
+                    const kalIdx = findIdx(['BIN KALIBRASI', 'KALIBRASI BIN', 'KALIBRASI']);
+                    const asalIdx = findIdx(['BIN ASAL']);
+                    const tujIdx = findIdx(['BIN TUJUAN']);
+                    const infoIdx = findIdx(['ADDITIONAL INFORMATION', 'ADDITIONAL INFO']);
+
+                    const rows = rawCsvData.slice(1);
+                    const mappedRows = rows.map(row => [
+                        tsIdx !== -1 && row[tsIdx] !== undefined ? row[tsIdx] : '',
+                        tglIdx !== -1 && row[tglIdx] !== undefined ? row[tglIdx] : '',
+                        pelIdx !== -1 && row[pelIdx] !== undefined ? row[pelIdx] : '',
+                        matIdx !== -1 && row[matIdx] !== undefined ? row[matIdx] : '',
+                        descIdx !== -1 && row[descIdx] !== undefined ? row[descIdx] : '',
+                        partIdx !== -1 && row[partIdx] !== undefined ? row[partIdx] : '',
+                        uomIdx !== -1 && row[uomIdx] !== undefined ? row[uomIdx] : '',
+                        typeIdx !== -1 && row[typeIdx] !== undefined ? row[typeIdx] : '',
+                        terNonSohIdx !== -1 && row[terNonSohIdx] !== undefined ? row[terNonSohIdx] : '',
+                        qtyNonSohIdx !== -1 && row[qtyNonSohIdx] !== undefined ? row[qtyNonSohIdx] : '',
+                        siteDiskIdx !== -1 && row[siteDiskIdx] !== undefined ? row[siteDiskIdx] : '',
+                        qtyDiskIdx !== -1 && row[qtyDiskIdx] !== undefined ? row[qtyDiskIdx] : '',
+                        tindIdx !== -1 && row[tindIdx] !== undefined ? row[tindIdx] : '',
+                        qtyTindIdx !== -1 && row[qtyTindIdx] !== undefined ? row[qtyTindIdx] : '',
+                        dcPalIdx !== -1 && row[dcPalIdx] !== undefined ? row[dcPalIdx] : '',
+                        fisikIdx !== -1 && row[fisikIdx] !== undefined ? row[fisikIdx] : '',
+                        finalIdx !== -1 && row[finalIdx] !== undefined ? row[finalIdx] : '',
+                        valIdx !== -1 && row[valIdx] !== undefined ? row[valIdx] : '',
+                        alrmIdx !== -1 && row[alrmIdx] !== undefined ? row[alrmIdx] : '',
+                        boxIdx !== -1 && row[boxIdx] !== undefined ? row[boxIdx] : '',
+                        docIdx !== -1 && row[docIdx] !== undefined ? row[docIdx] : '',
+                        ccpIdx !== -1 && row[ccpIdx] !== undefined ? row[ccpIdx] : '',
+                        kalIdx !== -1 && row[kalIdx] !== undefined ? row[kalIdx] : '',
+                        asalIdx !== -1 && row[asalIdx] !== undefined ? row[asalIdx] : '',
+                        tujIdx !== -1 && row[tujIdx] !== undefined ? row[tujIdx] : '',
+                        infoIdx !== -1 && row[infoIdx] !== undefined ? row[infoIdx] : ''
+                    ]);
+
+                    const targetHeaders = ["Timestamp", "Tgl Cycle Count", "Pelaksana", "Material", "Material Description", "Part Number", "UoM", "Material Type SOH DC Palaran", "Actual Fisik Cycle Count", "Actual Final Non SOH", "Finalisasi Value", "Alarm", "Packing To Box", "Dokumentasi", "Link CCP", "Kalibrasi BIN", "BIN Asal", "Bin Tujuan", "Additional Information"];
+                    
+                    const exportData = [targetHeaders, ...mappedRows];
+                    const worksheet = XLSX.utils.aoa_to_sheet(exportData);
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, "Data Inspeksi");
+                    
+                    XLSX.writeFile(workbook, `Export_Inspeksi_DeadStock_${new Date().toISOString().slice(0,10)}.xlsx`);
+                    showToast("Berhasil mengekspor data ke Excel", "success");
+                } catch (err) {
+                    console.error("Export error: ", err);
+                    showToast("Gagal melakukan export data.", "error");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            });
+        }
+
+        if (materialNumberInput) {
+            materialNumberInput.addEventListener('input', function(e) {
+                const val = this.value.trim().toUpperCase().replace(/^0+/, ''); 
+                if (suggestionBox) suggestionBox.innerHTML = '';
+                
+                if (!val) {
+                    if (suggestionBox) suggestionBox.classList.add('hidden');
+                    return;
+                }
+
+                const matches = new Map();
+
+                if (cachedMb52Data && Array.isArray(cachedMb52Data)) {
+                    for (let i = 1; i < cachedMb52Data.length; i++) {
+                        const row = cachedMb52Data[i];
+                        if (!row) continue;
+                        const matNum = row[0] ? row[0].toString().trim().toUpperCase() : '';
+                        const cleanMatNum = matNum.replace(/^0+/, '');
+                        const desc = row[1] ? row[1].toString().trim() : '';
+                        const binVal = row[8] ? row[8].toString().trim() : '';
+
+                        if (cleanMatNum.includes(val) || matNum.includes(val)) {
+                            matches.set(cleanMatNum, {
+                                material: cleanMatNum,
+                                originalMaterial: matNum,
+                                desc: desc + (binVal ? ` (Bin: ${binVal})` : ''),
+                                mpn: ''
+                            });
+                            if (matches.size >= 15) break;
+                        }
+                    }
+                }
+
+                if (matches.size < 15 && cachedMasterData && Array.isArray(cachedMasterData)) {
+                    for (let i = 1; i < cachedMasterData.length; i++) {
+                        const row = cachedMasterData[i];
+                        if (!row) continue;
+                        const matNum = row[masterDataIndices.mat] ? row[masterDataIndices.mat].toString().trim().toUpperCase() : '';
+                        const cleanMatNum = matNum.replace(/^0+/, '');
+                        const desc = row[masterDataIndices.desc] ? row[masterDataIndices.desc].toString().trim() : '';
+                        const mpnVal = row[masterDataIndices.mpn] ? row[masterDataIndices.mpn].toString().trim().toUpperCase() : '';
+
+                        if (cleanMatNum.includes(val) || matNum.includes(val) || mpnVal.includes(val)) {
+                            if (!matches.has(cleanMatNum)) {
+                                matches.set(cleanMatNum, {
+                                    material: cleanMatNum,
+                                    originalMaterial: matNum,
+                                    desc: desc,
+                                    mpn: mpnVal
+                                });
+                            }
+                            if (matches.size >= 15) break;
+                        }
+                    }
+                }
+
+                if (matches.size > 0) {
+                    matches.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'p-3 hover:bg-zinc-50 cursor-pointer border-b border-zinc-100 last:border-0 transition-colors text-sm font-medium text-zinc-900';
+                        
+                        let titleHtml = `<span>${item.originalMaterial || item.material}</span>`;
+                        if (item.mpn) {
+                            titleHtml += ` <span class="text-[10px] font-semibold text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded ml-2 border border-zinc-200">MPN: ${item.mpn}</span>`;
+                        }
+                        
+                        div.innerHTML = `<div class="flex items-center flex-wrap mb-0.5">${titleHtml}</div><div class="text-xs text-zinc-500 truncate">${item.desc}</div>`;
+                        
+                        div.addEventListener('click', function() {
+                            materialNumberInput.value = item.originalMaterial || item.material; 
+                            if (suggestionBox) suggestionBox.classList.add('hidden');
+                            btnCekStatus.click();
+                        });
+                        
+                        suggestionBox.appendChild(div);
+                    });
+                    suggestionBox.classList.remove('hidden');
+                } else {
+                    suggestionBox.classList.add('hidden');
+                }
+            });
+        }
+
+        if (btnCekStatus) {
+            btnCekStatus.addEventListener('click', async function() {
+                if (!materialNumberInput) return;
+                const inputVal = materialNumberInput.value.trim().toUpperCase(); 
+                
+                if(!GOOGLE_SCRIPT_URL) return;
+
+                btnCekStatus.disabled = true;
+                if (statusIndicator) statusIndicator.classList.add('hidden');
+                if (mb52Card) mb52Card.classList.add('hidden');
+                if (statusIndicator) statusIndicator.className = 'hidden mb-4 p-3 rounded-lg text-sm font-medium text-center border shadow-sm';
+
+                currentTotalUnrestricted = 0;
+                currentMaterialPrice = 0;
+                const mb52RowsContainer = document.getElementById('mb52RowsContainer');
+                if (mb52RowsContainer) mb52RowsContainer.innerHTML = '';
+                const mb52TotalUnrestricted = document.getElementById('mb52TotalUnrestricted');
+                if (mb52TotalUnrestricted) mb52TotalUnrestricted.textContent = '-';
+                if (descriptionInput) descriptionInput.value = '';
+                if (partNumberInput) partNumberInput.value = '';
+                if (boxPackingInput) boxPackingInput.value = '';
+                if (uomInput) uomInput.value = '';
+                if (storageBinInput) storageBinInput.value = '';
+                if (remarksInput) remarksInput.value = '';
+                if (totalValueInput) totalValueInput.value = '';
+                if (overStockInput) overStockInput.value = '';
+                if (materialTypeInput) materialTypeInput.value = '';
+                if (alarmInput) alarmInput.value = '';
+                if (actualFinalInput) actualFinalInput.value = '';
+                const finalField = document.getElementById('finalisasiValue');
+                if (finalField) finalField.value = '';
+                const remaks2021Input = document.getElementById('remaks2021');
+                const remaks2023Input = document.getElementById('remaks2023');
+                if (remaks2021Input) remaks2021Input.value = '';
+                if (remaks2023Input) remaks2023Input.value = '';
+                const qtyRemaks2021Input = document.getElementById('qtyRemaks2021');
+                const qtyRemaks2023Input = document.getElementById('qtyRemaks2023');
+                if (qtyRemaks2021Input) { qtyRemaks2021Input.value = ''; qtyRemaks2021Input.removeAttribute('readonly'); qtyRemaks2021Input.dataset.locked = "false"; }
+                if (qtyRemaks2023Input) { qtyRemaks2023Input.value = ''; qtyRemaks2023Input.removeAttribute('readonly'); qtyRemaks2023Input.dataset.locked = "false"; }
+                
+                const qtyPartNonSohClosingInput = document.getElementById('qtyPartNonSohClosing');
+                if (qtyPartNonSohClosingInput) qtyPartNonSohClosingInput.value = '';
+                const totalQtyAkhirInput = document.getElementById('totalQtyAkhir');
+                if (totalQtyAkhirInput) totalQtyAkhirInput.value = '';
+                const alarmQty2021 = document.getElementById('alarmQty2021');
+                if (alarmQty2021) alarmQty2021.classList.add('hidden');
+                const alarmQty2023 = document.getElementById('alarmQty2023');
+                if (alarmQty2023) alarmQty2023.classList.add('hidden');
+                
+                const infoPrev21 = document.getElementById('infoPrev21');
+                if (infoPrev21) infoPrev21.classList.add('hidden');
+                const infoPrev23 = document.getElementById('infoPrev23');
+                if (infoPrev23) infoPrev23.classList.add('hidden');
+                const infoPrevNonSoh = document.getElementById('infoPrevNonSoh');
+                if (infoPrevNonSoh) infoPrevNonSoh.classList.add('hidden');
+                const infoPrevBox = document.getElementById('infoPrevBox');
+                if (infoPrevBox) infoPrevBox.classList.add('hidden');
+                
+                if (document.getElementById('binNew2021Group')) document.getElementById('binNew2021Group').classList.add('hidden');
+                if (document.getElementById('binNew2023Group')) document.getElementById('binNew2023Group').classList.add('hidden');
+
+                try {
+                    if (!cachedMasterData && CSV_MASTER_DATA_URL) {
+                        cachedMasterData = await loadCSV(CSV_MASTER_DATA_URL);
+                        indexMasterData(cachedMasterData);
+                    }
+                    if (!cachedAnalisaData && CSV_ANALISA_URL) {
+                        cachedAnalisaData = await loadCSV(CSV_ANALISA_URL);
+                        indexAnalisaData(cachedAnalisaData);
+                    }
+                    if (!cachedPriceData && CSV_PRICE_URL) {
+                        cachedPriceData = await loadCSV(CSV_PRICE_URL);
+                        indexPriceData(cachedPriceData);
+                    }
+                    if (!cachedMb52Data && CSV_MB52_URL) {
+                        cachedMb52Data = await loadCSV(CSV_MB52_URL);
+                        indexMb52Data(cachedMb52Data);
+                    }
+
+                    const cleanInputVal = inputVal.replace(/^0+/, '');
+                    const foundRowArray = masterDataMap.get(inputVal) || masterDataMap.get(cleanInputVal) || masterMpnMap.get(inputVal);
+
+                    if (statusIndicator) statusIndicator.classList.remove('hidden');
+                    
+                    let actualMatNum = ''; 
+                    let pickedUom = '';
+                    if (foundRowArray) {
+                        actualMatNum = foundRowArray[masterDataIndices.mat] ? foundRowArray[masterDataIndices.mat].toString().trim() : '';
+                        const actualMpn = foundRowArray[masterDataIndices.mpn] ? foundRowArray[masterDataIndices.mpn].toString().trim() : '';
+                        materialNumberInput.value = actualMatNum || actualMpn;
+                        
+                        if (descriptionInput) descriptionInput.value = foundRowArray[masterDataIndices.desc] ? foundRowArray[masterDataIndices.desc].trim() : '';
+                        if (partNumberInput) {
+                            partNumberInput.value = foundRowArray[masterDataIndices.mpn] ? foundRowArray[masterDataIndices.mpn].trim() : '';
+                            partNumberInput.setAttribute('readonly', 'true');
+                        }
+                        if (boxPackingInput) {
+                            boxPackingInput.value = foundRowArray[masterDataIndices.box] ? foundRowArray[masterDataIndices.box].trim() : '';
+                            boxPackingInput.setAttribute('readonly', 'true');
+                        }
+                        pickedUom = foundRowArray[masterDataIndices.uom] ? foundRowArray[masterDataIndices.uom].trim() : '';
+                        if (uomInput) {
+                            uomInput.value = pickedUom;
+                            uomInput.setAttribute('readonly', 'true');
+                        }
+                        if (storageBinInput) {
+                            storageBinInput.value = foundRowArray[masterDataIndices.bin] ? foundRowArray[masterDataIndices.bin].trim() : '';
+                            storageBinInput.setAttribute('readonly', 'true');
+                        }
+                        if (remarksInput) {
+                            remarksInput.value = foundRowArray[masterDataIndices.rem] ? foundRowArray[masterDataIndices.rem].trim() : '';
+                            remarksInput.setAttribute('readonly', 'true');
+                        }
+                        if (totalValueInput) {
+                            totalValueInput.value = foundRowArray[masterDataIndices.val] ? foundRowArray[masterDataIndices.val].trim() : '';
+                            totalValueInput.setAttribute('readonly', 'true');
+                        }
+                        if (overStockInput) {
+                            overStockInput.value = foundRowArray[masterDataIndices.over] ? foundRowArray[masterDataIndices.over].trim() : '';
+                            overStockInput.setAttribute('readonly', 'true');
+                        }
+                        if (remaks2021Input && masterDataIndices.rem21 !== -1) {
+                            const val2021 = foundRowArray[masterDataIndices.rem21] ? foundRowArray[masterDataIndices.rem21].trim() : '';
+                            remaks2021Input.value = val2021;
+                            remaks2021Input.setAttribute('readonly', 'true');
+                            
+                            const qty2021Input = document.getElementById('qtyRemaks2021');
+                            if (qty2021Input) {
+                                if (val2021.toUpperCase() === 'TIDAK ADA DI 2021') {
+                                    qty2021Input.value = 0;
+                                    qty2021Input.setAttribute('readonly', 'true');
+                                } else {
+                                    qty2021Input.value = '';
+                                    qty2021Input.removeAttribute('readonly');
+                                }
+                            }
+                        }
+                        if (masterDataIndices.qtyDs21 !== -1) {
+                            const alarmQty2021 = document.getElementById('alarmQty2021');
+                            const valAlarmQty2021 = document.getElementById('valAlarmQty2021');
+                            const valQty21 = foundRowArray[masterDataIndices.qtyDs21] ? foundRowArray[masterDataIndices.qtyDs21].trim() : '';
+                            if (alarmQty2021 && valAlarmQty2021) {
+                                if (valQty21) {
+                                    valAlarmQty2021.textContent = valQty21;
+                                    alarmQty2021.classList.remove('hidden');
+                                } else {
+                                    alarmQty2021.classList.add('hidden');
+                                }
+                            }
+                        }
+                        if (remaks2023Input && masterDataIndices.rem23 !== -1) {
+                            const val2023 = foundRowArray[masterDataIndices.rem23] ? foundRowArray[masterDataIndices.rem23].trim() : '';
+                            remaks2023Input.value = val2023;
+                            remaks2023Input.setAttribute('readonly', 'true');
+                            
+                            const qty2023Input = document.getElementById('qtyRemaks2023');
+                            if (qty2023Input) {
+                                if (val2023.toUpperCase() === 'TIDAK ADA DI 2023') {
+                                    qty2023Input.value = 0;
+                                    qty2023Input.setAttribute('readonly', 'true');
+                                } else {
+                                    qty2023Input.value = '';
+                                    qty2023Input.removeAttribute('readonly');
+                                }
+                            }
+                        }
+                        if (masterDataIndices.qtyDs23 !== -1) {
+                            const alarmQty2023 = document.getElementById('alarmQty2023');
+                            const valAlarmQty2023 = document.getElementById('valAlarmQty2023');
+                            const valQty23 = foundRowArray[masterDataIndices.qtyDs23] ? foundRowArray[masterDataIndices.qtyDs23].trim() : '';
+                            if (alarmQty2023 && valAlarmQty2023) {
+                                if (valQty23) {
+                                    valAlarmQty2023.textContent = valQty23;
+                                    alarmQty2023.classList.remove('hidden');
+                                } else {
+                                    alarmQty2023.classList.add('hidden');
+                                }
+                            }
+                        }
+                        
+                        let foundAnalisa = null;
+                        let idxTer = 1, idxQtyN = 2, idxSite = 3, idxQtyD = 4, idxTin = 5, idxQtyT = 6, idxAlrm = 7;
+                        
+                        const foundAnalisaObj = cachedAnalisaMap.get(actualMatNum) || cachedAnalisaMap.get(cleanInputVal);
+                        if (foundAnalisaObj) {
+                            foundAnalisa = foundAnalisaObj.row;
+                            idxTer = foundAnalisaObj.idxTer;
+                            idxQtyN = foundAnalisaObj.idxQtyN;
+                            idxSite = foundAnalisaObj.idxSite;
+                            idxQtyD = foundAnalisaObj.idxQtyD;
+                            idxTin = foundAnalisaObj.idxTin;
+                            idxQtyT = foundAnalisaObj.idxQtyT;
+                            idxAlrm = foundAnalisaObj.idxAlrm;
+                        }
+
+                        let statusValue = ''; 
+                        if (foundAnalisa) {
+                            if (terdaftarNonSohInput) terdaftarNonSohInput.value = foundAnalisa[idxTer] ? foundAnalisa[idxTer].trim() : '';
+                            if (qtyNonSohInput) qtyNonSohInput.value = foundAnalisa[idxQtyN] ? foundAnalisa[idxQtyN].trim() : '';
+                            if (siteDiskrepansiInput) siteDiskrepansiInput.value = foundAnalisa[idxSite] ? foundAnalisa[idxSite].trim() : '';
+                            if (qtyDiskrepansiInput) qtyDiskrepansiInput.value = foundAnalisa[idxQtyD] ? foundAnalisa[idxQtyD].trim() : '';
+                            if (tindakanInput) tindakanInput.value = foundAnalisa[idxTin] ? foundAnalisa[idxTin].trim() : '';
+                            if (qtyTindakanInput) qtyTindakanInput.value = foundAnalisa[idxQtyT] ? foundAnalisa[idxQtyT].trim() : '';
+                            
+                            statusValue = foundAnalisa[idxAlrm] ? foundAnalisa[idxAlrm].trim() : '';
+                            if (alarmInput) alarmInput.value = statusValue;
+                        } else {
+                            if (terdaftarNonSohInput) terdaftarNonSohInput.value = '';
+                            if (qtyNonSohInput) qtyNonSohInput.value = '';
+                            if (siteDiskrepansiInput) siteDiskrepansiInput.value = '';
+                            if (qtyDiskrepansiInput) qtyDiskrepansiInput.value = '';
+                            if (tindakanInput) tindakanInput.value = '';
+                            if (qtyTindakanInput) qtyTindakanInput.value = '';
+                            if (alarmInput) alarmInput.value = '';
+                        }
+                        
+                        if (terdaftarNonSohInput) terdaftarNonSohInput.setAttribute('readonly', 'true');
+                        if (qtyNonSohInput) qtyNonSohInput.setAttribute('readonly', 'true');
+                        if (siteDiskrepansiInput) siteDiskrepansiInput.setAttribute('readonly', 'true');
+                        if (qtyDiskrepansiInput) qtyDiskrepansiInput.setAttribute('readonly', 'true');
+                        if (tindakanInput) tindakanInput.setAttribute('readonly', 'true');
+                        if (qtyTindakanInput) qtyTindakanInput.setAttribute('readonly', 'true');
+                        if (alarmInput) {
+                            alarmInput.value = statusValue;
+                            alarmInput.setAttribute('readonly', 'true');
+                        }
+
+                        const statusUpper = statusValue.toUpperCase();
+                        if (statusUpper.includes('BOX KHUSUS') || statusUpper.includes('PICKING TO BOX') || statusUpper.includes('PACKING TO BOX')) {
+                            if (statusIndicator) {
+                                statusIndicator.innerHTML = "<i class='fas fa-exclamation-triangle mr-1.5 animate-bounce inline-block'></i> " + statusValue.toUpperCase();
+                                statusIndicator.className = 'mb-4 p-3 rounded-lg text-sm font-semibold text-center border bg-red-50 text-red-700 border-red-200 animate-pulse py-4';
+                            }
+                        } else if (statusUpper.includes('DEAD STOCK') || statusUpper.includes('BEBAN')) {
+                            if (statusIndicator) {
+                                statusIndicator.innerHTML = "<i class='fas fa-exclamation-triangle mr-1.5'></i> " + statusValue;
+                                statusIndicator.className = 'mb-4 p-3 rounded-lg text-sm font-medium text-center border bg-amber-50 text-amber-700 border-amber-200';
+                            }
+                        } else if (statusValue !== "") {
+                            if (statusIndicator) {
+                                statusIndicator.innerHTML = "<i class='fas fa-info-circle mr-1.5'></i> " + statusValue;
+                                statusIndicator.className = 'mb-4 p-3 rounded-lg text-sm font-medium text-center border bg-zinc-100 text-zinc-700 border-zinc-200';
+                            }
+                        } else {
+                            if (statusIndicator) {
+                                statusIndicator.innerHTML = "<i class='fas fa-check-circle mr-1.5'></i> Data Ditemukan";
+                                statusIndicator.className = 'mb-4 p-3 rounded-lg text-sm font-medium text-center border bg-emerald-50 text-emerald-700 border-emerald-200';
+                            }
+                        }
+
+                        const cleanSearchMat = actualMatNum.replace(/^0+/, '');
+                        const foundMb52Rows = mb52DataMap.get(cleanSearchMat) || mb52DataMap.get(actualMatNum) || [];
+
+                        if (foundMb52Rows.length > 0) {
+                            let htmlRows = '';
+                            let totalUnrestricted = 0;
+                            let maxUnrestrictedQty = -1;
+                            let selectedBin = '';
+                            
+                            foundMb52Rows.forEach(item => {
+                                const row = item.row;
+                                const sloc = row[item.slocIdx] !== undefined ? row[item.slocIdx].trim() : '-';
+                                const bin = row[item.binIdx] !== undefined ? row[item.binIdx].trim() : '-';
+                                const unrestrictedStr = row[item.unrestrictedIdx] !== undefined ? row[item.unrestrictedIdx].trim() : '0';
+                                
+                                let unrestrictedQty = 0;
+                                if (unrestrictedStr !== '-' && unrestrictedStr !== '') {
+                                    let cleanStr = unrestrictedStr.replace(/\s/g, '');
+                                    if (cleanStr.includes('.') && cleanStr.lastIndexOf('.') > cleanStr.lastIndexOf(',')) {
+                                        unrestrictedQty = parseFloat(cleanStr.replace(/,/g, ''));
+                                    } else {
+                                        unrestrictedQty = parseFloat(cleanStr.replace(/\./g, '').replace(',', '.'));
+                                    }
+                                }
+                                totalUnrestricted += unrestrictedQty;
+
+                                htmlRows += `
+                                    <div class="grid grid-cols-3 gap-2 text-xs py-1.5 border-b border-zinc-200 last:border-0">
+                                        <div class="font-medium text-zinc-800">${sloc}</div>
+                                        <div class="font-medium text-zinc-800">${bin}</div>
+                                        <div class="font-medium text-zinc-800">${unrestrictedStr}</div>
+                                    </div>
+                                `;
+                                
+                                if (bin && bin !== '-' && bin !== '') {
+                                    if (unrestrictedQty > maxUnrestrictedQty) {
+                                        maxUnrestrictedQty = unrestrictedQty;
+                                        selectedBin = bin;
+                                    }
+                                }
+                            });
+
+                            mb52RowsContainer.innerHTML = htmlRows;
+                            mb52TotalUnrestricted.textContent = totalUnrestricted.toLocaleString('id-ID');
+                            currentTotalUnrestricted = totalUnrestricted; 
+                            calculateActualFinal(); 
+                            if (mb52Card) mb52Card.classList.remove('hidden');
+                        } else {
+                            mb52RowsContainer.innerHTML = '';
+                            mb52TotalUnrestricted.textContent = '-';
+                            currentTotalUnrestricted = 0;
+                            calculateActualFinal();
+                            if (mb52Card) mb52Card.classList.add('hidden');
+                        }
+
+                        currentMaterialPrice = priceDataMap.get(cleanSearchMat) || priceDataMap.get(actualMatNum) || 0;
+                        calculateFinalisasiValue(); 
+                        renderStockInfoFeedback(actualMatNum || inputVal, pickedUom);
+                        
+                        if (typeof calcTotalQtyAkhir === 'function') calcTotalQtyAkhir();
+
+                    } else {
+                        if (statusIndicator) {
+                            statusIndicator.innerHTML = "<i class='fas fa-times-circle mr-1.5'></i> Material tidak ditemukan";
+                            statusIndicator.className = 'mb-4 p-3 rounded-lg text-sm font-medium text-center border bg-zinc-100 text-zinc-600 border-zinc-200';
+                        }
+                        if (mb52Card) mb52Card.classList.add('hidden');
+                        currentTotalUnrestricted = 0;
+                        calculateActualFinal();
+
+                        if (partNumberInput) partNumberInput.removeAttribute('readonly');
+                        if (boxPackingInput) boxPackingInput.removeAttribute('readonly');
+                        if (uomInput) uomInput.removeAttribute('readonly');
+                        if (storageBinInput) storageBinInput.removeAttribute('readonly');
+                        if (remarksInput) remarksInput.removeAttribute('readonly');
+                        if (totalValueInput) totalValueInput.removeAttribute('readonly');
+                        if (overStockInput) overStockInput.removeAttribute('readonly');
+                        const rem21El = document.getElementById('remaks2021');
+                        const rem23El = document.getElementById('remaks2023');
+                        const qtyRem21El = document.getElementById('qtyRemaks2021');
+                        const qtyRem23El = document.getElementById('qtyRemaks2023');
+                        if (rem21El) rem21El.removeAttribute('readonly');
+                        if (rem23El) rem23El.removeAttribute('readonly');
+                        if (qtyRem21El) { qtyRem21El.removeAttribute('readonly'); qtyRem21El.value = ''; qtyRem21El.dataset.locked = "false"; }
+                        if (qtyRem23El) { qtyRem23El.removeAttribute('readonly'); qtyRem23El.value = ''; qtyRem23El.dataset.locked = "false"; }
+                        if (materialTypeInput) materialTypeInput.removeAttribute('readonly');
+                        if (terdaftarNonSohInput) terdaftarNonSohInput.removeAttribute('readonly');
+                        if (qtyNonSohInput) qtyNonSohInput.removeAttribute('readonly');
+                        if (siteDiskrepansiInput) siteDiskrepansiInput.removeAttribute('readonly');
+                        renderStockInfoFeedback(inputVal, '');
+                    }
+
+                    checkDuplicateInInspections(actualMatNum || inputVal);
+
+                    if (CSV_SUBMITTED_URL) {
+                        loadCSV(CSV_SUBMITTED_URL + '&t=' + new Date().getTime()).then(data => {
+                            cachedSubmittedData = data;
+                            indexSubmittedData(data);
+                            checkDuplicateInInspections(actualMatNum || inputVal);
+                        }).catch(e => console.warn("Background fetch failed:", e));
+                    }
+
+                } catch (error) {
+                    console.error("Fetch error:", error);
+                    showToast("Gagal mengunduh Master Data.", "error");
+                } finally {
+                    btnCekStatus.innerHTML = '<i class="fas fa-search"></i>';
+                    btnCekStatus.disabled = false;
+                }
+            });
+        }
+
+        if (btnModeRevisi) {
+            btnModeRevisi.addEventListener('click', function() {
+                if (window.currentDuplicateData) {
+                    window.submitMode = 'revisi';
+                    if (actualFinalInput) actualFinalInput.value = window.currentDuplicateData.actualFinal;
+                    calculateFinalisasiValue(); 
+                    if (packingToBoxSelect) {
+                        packingToBoxSelect.value = window.currentDuplicateData.packingToBox;
+                        packingToBoxSelect.dispatchEvent(new Event('change')); 
+                    }
+                    const revisiModeBadge = document.getElementById('revisiModeBadge');
+                    if (revisiModeBadge) revisiModeBadge.classList.remove('hidden');
+                    
+                    const prevQtyFeedback = document.getElementById('prevQtyFeedback');
+                    const prevQtyVal = document.getElementById('prevQtyVal');
+                    if (prevQtyFeedback && prevQtyVal) {
+                        prevQtyVal.textContent = window.currentDuplicateData.qtyCycleCount || '0';
+                        prevQtyFeedback.classList.remove('hidden');
+                    }
+
+                    const rawQty21 = parseFloat(window.currentDuplicateData.qty21);
+                    const rawQty23 = parseFloat(window.currentDuplicateData.qty23);
+                    
+                    const prevQty21 = !isNaN(rawQty21) ? rawQty21 : 0;
+                    const prevQty23 = !isNaN(rawQty23) ? rawQty23 : 0;
+                    
+                    const q21Input = document.getElementById('qtyRemaks2021');
+                    const a21El = document.getElementById('valAlarmQty2021');
+                    const a21Active = document.getElementById('alarmQty2021') && !document.getElementById('alarmQty2021').classList.contains('hidden');
+                    
+                    let info21 = document.getElementById('infoPrev21');
+                    if (!info21 && q21Input) {
+                        info21 = document.createElement('p');
+                        info21.id = 'infoPrev21';
+                        info21.className = 'text-[10px] mt-1 font-medium';
+                        q21Input.parentNode.appendChild(info21);
+                    }
+                    if (info21) {
+                        info21.classList.add('hidden');
+                        info21.classList.remove('text-blue-600', 'text-green-600');
+                    }
+                    
+                    if (a21Active && a21El && q21Input) {
+                        const a21Val = parseFloat(a21El.textContent) || 0;
+                        if (prevQty21 >= a21Val && a21Val >= 0) {
+                            const valToLock = prevQty21 > 0 ? prevQty21 : a21Val;
+                            q21Input.value = valToLock;
+                            q21Input.setAttribute('readonly', 'true');
+                            q21Input.dataset.locked = "true";
+                            if (info21) {
+                                info21.innerHTML = `<i class="fas fa-lock mr-1"></i>Data terkunci (Sesuai Alarm Qty / Data Sebelumnya: ${valToLock})`;
+                                info21.className = 'text-[10px] mt-1 font-medium text-emerald-600';
+                                info21.classList.remove('hidden');
+                            }
+                        } else {
+                            q21Input.value = prevQty21 > 0 ? prevQty21 : '';
+                            q21Input.removeAttribute('readonly');
+                            q21Input.dataset.locked = "false";
+                            const sisa21 = a21Val - prevQty21;
+                            q21Input.setAttribute('max', sisa21);
+                            if (prevQty21 > 0 && info21) {
+                                info21.innerHTML = `<i class="fas fa-info-circle mr-1"></i>Sebelumnya diinput: <b>${prevQty21}</b> (Maks. Tambahan: <b>${sisa21}</b>)`;
+                                info21.className = 'text-[10px] mt-1 font-medium text-blue-600';
+                                info21.classList.remove('hidden');
+                            }
+                        }
+                    } else if (q21Input) {
+                        q21Input.dataset.locked = "false";
+                    }
+
+                    const q23Input = document.getElementById('qtyRemaks2023');
+                    const a23El = document.getElementById('valAlarmQty2023');
+                    const a23Active = document.getElementById('alarmQty2023') && !document.getElementById('alarmQty2023').classList.contains('hidden');
+                    
+                    let info23 = document.getElementById('infoPrev23');
+                    if (!info23 && q23Input) {
+                        info23 = document.createElement('p');
+                        info23.id = 'infoPrev23';
+                        info23.className = 'text-[10px] mt-1 font-medium';
+                        q23Input.parentNode.appendChild(info23);
+                    }
+                    if (info23) {
+                        info23.classList.add('hidden');
+                        info23.classList.remove('text-blue-600', 'text-green-600');
+                    }
+                    
+                    if (a23Active && a23El && q23Input) {
+                        const a23Val = parseFloat(a23El.textContent) || 0;
+                        if (prevQty23 >= a23Val && a23Val >= 0) {
+                            const valToLock = prevQty23 > 0 ? prevQty23 : a23Val;
+                            q23Input.value = valToLock;
+                            q23Input.setAttribute('readonly', 'true');
+                            q23Input.dataset.locked = "true";
+                            if (info23) {
+                                info23.innerHTML = `<i class="fas fa-lock mr-1"></i>Data terkunci (Sesuai Alarm Qty / Data Sebelumnya: ${valToLock})`;
+                                info23.className = 'text-[10px] mt-1 font-medium text-emerald-600';
+                                info23.classList.remove('hidden');
+                            }
+                        } else {
+                            q23Input.value = prevQty23 > 0 ? prevQty23 : '';
+                            q23Input.removeAttribute('readonly');
+                            q23Input.dataset.locked = "false";
+                            const sisa23 = a23Val - prevQty23;
+                            q23Input.setAttribute('max', sisa23);
+                            if (prevQty23 > 0 && info23) {
+                                info23.innerHTML = `<i class="fas fa-info-circle mr-1"></i>Sebelumnya diinput: <b>${prevQty23}</b> (Maks. Tambahan: <b>${sisa23}</b>)`;
+                                info23.className = 'text-[10px] mt-1 font-medium text-blue-600';
+                                info23.classList.remove('hidden');
+                            }
+                        }
+                    } else if (q23Input) {
+                        q23Input.dataset.locked = "false";
+                    }
+
+                    const qNonSohInput = document.getElementById('qtyPartNonSohClosing');
+                    let infoNonSoh = document.getElementById('infoPrevNonSoh');
+                    if (!infoNonSoh && qNonSohInput) {
+                        infoNonSoh = document.createElement('p');
+                        infoNonSoh.id = 'infoPrevNonSoh';
+                        infoNonSoh.className = 'text-[10px] text-zinc-500 mt-1 font-medium';
+                        qNonSohInput.parentNode.appendChild(infoNonSoh);
+                    }
+                    if (infoNonSoh) {
+                        const prevQtyPartNonSoh = window.currentDuplicateData.qtyPartNonSoh2026 || '0';
+                        const prevBoxPartNonSoh = window.currentDuplicateData.boxPartNonSoh2026 || '-';
+                        if (parseFloat(prevQtyPartNonSoh) > 0 || (prevBoxPartNonSoh !== '' && prevBoxPartNonSoh !== '-')) {
+                            infoNonSoh.innerHTML = `<i class="fas fa-history mr-1"></i>Data Sebelumnya - Qty: <b>${prevQtyPartNonSoh}</b>, Box: <b>${prevBoxPartNonSoh}</b>`;
+                            infoNonSoh.classList.remove('hidden');
+                        } else {
+                            infoNonSoh.classList.add('hidden');
+                        }
+                    }
+
+                    const boxInputGroup = document.getElementById('packingToBoxGroup');
+                    let infoPrevBox = document.getElementById('infoPrevBox');
+                    if (!infoPrevBox && boxInputGroup) {
+                        infoPrevBox = document.createElement('p');
+                        infoPrevBox.id = 'infoPrevBox';
+                        infoPrevBox.className = 'text-[10px] text-zinc-500 mt-1 font-medium';
+                        boxInputGroup.appendChild(infoPrevBox);
+                    }
+                    if (infoPrevBox) {
+                        const prevBoxPartNonSoh = window.currentDuplicateData.boxPartNonSoh2026 || '-';
+                        if (prevBoxPartNonSoh !== '' && prevBoxPartNonSoh !== '-') {
+                            infoPrevBox.innerHTML = `<i class="fas fa-history mr-1"></i>Data Sebelumnya disimpan di: <b>${prevBoxPartNonSoh}</b>`;
+                            infoPrevBox.classList.remove('hidden');
+                        } else {
+                            infoPrevBox.classList.add('hidden');
+                        }
+                    }
+                    
+                    if (typeof calcTotalQtyAkhir === 'function') calcTotalQtyAkhir();
+                    if (typeof toggleBinNewSegregasi === 'function') toggleBinNewSegregasi();
+
+                    if (duplicateModal) duplicateModal.classList.add('hidden');
+                    showToast("Mode revisi data aktif.", "info");
+                }
+            });
+        }
+
+        if (btnModeBaru) {
+            btnModeBaru.addEventListener('click', function() {
+                window.submitMode = 'baru';
+                const revisiModeBadge = document.getElementById('revisiModeBadge');
+                if (revisiModeBadge) revisiModeBadge.classList.add('hidden');
+                if (packingToBoxSelect) {
+                    packingToBoxSelect.removeAttribute('readonly');
+                    packingToBoxSelect.removeAttribute('required');
+                }
+                if (duplicateModal) duplicateModal.classList.add('hidden');
+                showToast("Melanjutkan sebagai baris baru.", "info");
+            });
+        }
+
+        if (btnCancelDuplicate) {
+            btnCancelDuplicate.addEventListener('click', function() {
+                if (formObj) formObj.reset();
+                setTglCycleCountWITA();
+
+                if (duplicateModal) duplicateModal.classList.add('hidden');
+                if (statusIndicator) statusIndicator.classList.add('hidden');
+                if (mb52Card) mb52Card.classList.add('hidden');
+                
+                if (partNumberInput) partNumberInput.removeAttribute('readonly');
+                if (boxPackingInput) boxPackingInput.removeAttribute('readonly');
+                if (uomInput) uomInput.removeAttribute('readonly');
+                if (storageBinInput) storageBinInput.removeAttribute('readonly');
+                if (remarksInput) remarksInput.removeAttribute('readonly');
+                if (totalValueInput) totalValueInput.removeAttribute('readonly');
+                if (overStockInput) overStockInput.removeAttribute('readonly');
+                const rem21El = document.getElementById('remaks2021');
+                const rem23El = document.getElementById('remaks2023');
+                const qtyRem21El = document.getElementById('qtyRemaks2021');
+                const qtyRem23El = document.getElementById('qtyRemaks2023');
+                if (rem21El) rem21El.removeAttribute('readonly');
+                if (rem23El) rem23El.removeAttribute('readonly');
+                if (qtyRem21El) { qtyRem21El.removeAttribute('readonly'); qtyRem21El.value = ''; qtyRem21El.dataset.locked = "false"; }
+                if (qtyRem23El) { qtyRem23El.removeAttribute('readonly'); qtyRem23El.value = ''; qtyRem23El.dataset.locked = "false"; }
+                if (materialTypeInput) materialTypeInput.removeAttribute('readonly');
+                if (alarmInput) alarmInput.removeAttribute('readonly');
+                if (terdaftarNonSohInput) terdaftarNonSohInput.removeAttribute('readonly');
+                if (qtyCycleCountInput) qtyCycleCountInput.value = '';
+                if (packingToBoxSelect) {
+                    packingToBoxSelect.removeAttribute('readonly');
+                    packingToBoxSelect.removeAttribute('required');
+                }
+                
+                const prevQtyFeedback = document.getElementById('prevQtyFeedback');
+                if (prevQtyFeedback) prevQtyFeedback.classList.add('hidden');
+                
+                const infoPrev21 = document.getElementById('infoPrev21');
+                if (infoPrev21) infoPrev21.classList.add('hidden');
+                const infoPrev23 = document.getElementById('infoPrev23');
+                if (infoPrev23) infoPrev23.classList.add('hidden');
+                const infoPrevNonSoh = document.getElementById('infoPrevNonSoh');
+                if (infoPrevNonSoh) infoPrevNonSoh.classList.add('hidden');
+                const infoPrevBox = document.getElementById('infoPrevBox');
+                if (infoPrevBox) infoPrevBox.classList.add('hidden');
+
+                currentMaterialPrice = 0;
+                currentTotalUnrestricted = 0;
+                calculateActualFinal();
+                resetCameraUI();
+                showToast("Dibatalkan.", "info");
+            });
+        }
+
+        if (btnResetMode) {
+            btnResetMode.addEventListener('click', function() {
+                window.submitMode = 'baru';
+                const revisiModeBadge = document.getElementById('revisiModeBadge');
+                if (revisiModeBadge) revisiModeBadge.classList.add('hidden');
+                if (packingToBoxSelect) {
+                    packingToBoxSelect.removeAttribute('readonly');
+                    packingToBoxSelect.removeAttribute('required');
+                }
+
+                const prevQtyFeedback = document.getElementById('prevQtyFeedback');
+                if (prevQtyFeedback) prevQtyFeedback.classList.add('hidden');
+                
+                const infoPrev21 = document.getElementById('infoPrev21');
+                if (infoPrev21) infoPrev21.classList.add('hidden');
+                const infoPrev23 = document.getElementById('infoPrev23');
+                if (infoPrev23) infoPrev23.classList.add('hidden');
+                const infoPrevNonSoh = document.getElementById('infoPrevNonSoh');
+                if (infoPrevNonSoh) infoPrevNonSoh.classList.add('hidden');
+                const infoPrevBox = document.getElementById('infoPrevBox');
+                if (infoPrevBox) infoPrevBox.classList.add('hidden');
+                
+                const q21Input = document.getElementById('qtyRemaks2021');
+                const q23Input = document.getElementById('qtyRemaks2023');
+                const rem21Input = document.getElementById('remaks2021');
+                const rem23Input = document.getElementById('remaks2023');
+                
+                if (q21Input && rem21Input && rem21Input.value.toUpperCase() !== 'TIDAK ADA DI 2021') {
+                    q21Input.removeAttribute('readonly');
+                    q21Input.value = '';
+                    q21Input.dataset.locked = "false";
+                }
+                if (q23Input && rem23Input && rem23Input.value.toUpperCase() !== 'TIDAK ADA DI 2023') {
+                    q23Input.removeAttribute('readonly');
+                    q23Input.value = '';
+                    q23Input.dataset.locked = "false";
+                }
+                
+                if (typeof toggleBinNewSegregasi === 'function') toggleBinNewSegregasi();
+
+                showToast("Mode revisi dibatalkan.", "info");
+            });
+        }
+
+        if (qtyCycleCountInput) {
+            qtyCycleCountInput.addEventListener('input', calculateActualFinal);
+        }
+
+        if (fotoInput) {
+            fotoInput.addEventListener('change', async function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    if (imagePreview && imagePreview.src && imagePreview.src.startsWith('blob:')) {
+                        URL.revokeObjectURL(imagePreview.src);
+                    }
+
+                    if (imagePreview) {
+                        imagePreview.src = URL.createObjectURL(file);
+                        imagePreview.classList.remove('hidden');
+                    }
+                    if (uploadPlaceholder) uploadPlaceholder.classList.add('hidden');
+                    if (retakeBtn) retakeBtn.classList.remove('hidden');
+
+                    try {
+                        const compressedBase64 = await compressImage(file, 800, 800, 0.5);
+                        if (fotoBase64Input) fotoBase64Input.value = compressedBase64;
+                        document.getElementById('nextBtnContainer').classList.remove('hidden');
+                    } catch (err) {
+                        const reader = new FileReader();
+                        reader.onloadend = function() {
+                            const base64String = reader.result.split(',')[1];
+                            if (fotoBase64Input) fotoBase64Input.value = base64String;
+                            document.getElementById('nextBtnContainer').classList.remove('hidden');
+                        }
+                        reader.readAsDataURL(file);
+                    }
+                }
+            });
+        }
+        
+        if (retakeBtn) {
+            retakeBtn.addEventListener('click', function() {
+                resetCameraUI();
+                document.getElementById('nextBtnContainer').classList.add('hidden');
+            });
+        }
+
+        if (formObj) {
+            formObj.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                if (!materialNumberInput.value.trim() || !pelaksanaInput.value.trim() || !tglCycleCountInput.value) {
+                    showToast("Pastikan material telah dicari dan data lengkap!", "error");
+                    return;
+                }
+
+                if (fotoBase64Input && !fotoBase64Input.value) {
+                    showToast("Dokumentasi foto fisik wajib diisi.", "error");
+                    return;
+                }
+
+                const q21ElCheck = document.getElementById('qtyRemaks2021');
+                const q21 = (q21ElCheck && q21ElCheck.dataset.locked === "true") ? 0 : (parseFloat(q21ElCheck ? q21ElCheck.value : 0) || 0);
+                const a21 = parseFloat(document.getElementById('valAlarmQty2021') ? document.getElementById('valAlarmQty2021').textContent : 0) || 0;
+                const isA21Active = document.getElementById('alarmQty2021') && !document.getElementById('alarmQty2021').classList.contains('hidden');
+                
+                const q23ElCheck = document.getElementById('qtyRemaks2023');
+                const q23 = (q23ElCheck && q23ElCheck.dataset.locked === "true") ? 0 : (parseFloat(q23ElCheck ? q23ElCheck.value : 0) || 0);
+                const a23 = parseFloat(document.getElementById('valAlarmQty2023') ? document.getElementById('valAlarmQty2023').textContent : 0) || 0;
+                const isA23Active = document.getElementById('alarmQty2023') && !document.getElementById('alarmQty2023').classList.contains('hidden');
+
+                let maxA21 = a21;
+                let maxA23 = a23;
+                if (window.submitMode === 'revisi' && window.currentDuplicateData) {
+                    const p21 = parseFloat(window.currentDuplicateData.qty21) || 0;
+                    const p23 = parseFloat(window.currentDuplicateData.qty23) || 0;
+                    maxA21 = a21 - p21;
+                    maxA23 = a23 - p23;
+                    if (maxA21 < 0) maxA21 = 0;
+                    if (maxA23 < 0) maxA23 = 0;
+                }
+
+                if ((isA21Active && q21 > maxA21) || (isA23Active && q23 > maxA23)) {
+                    const modal = document.getElementById('alarmPopupModal');
+                    const modalMsg = document.getElementById('alarmPopupMsg');
+                    if (modal && modalMsg) {
+                        modalMsg.textContent = window.submitMode === 'revisi'
+                            ? "Pengisian melebihi batas maksimal sisa target Alarm."
+                            : "Periksa kembali QTY Part Deasto dan Packing Box Anda.";
+                        modal.classList.remove('hidden');
+                    }
+                    return; 
+                }
+
+                if(!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === '') {
+                    showToast("URL Google Apps Script tidak valid.", "error");
+                    return;
+                }
+
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i> Mengirim...';
+                }
+
+                if (loadingOverlay) loadingOverlay.classList.replace('hidden', 'flex');
+
+                const formData = new FormData(formObj);
+                const dataObj = {};
+                formData.forEach((value, key) => {
+                    dataObj[key] = value;
+                });
+
+                const a21Txt = document.getElementById('valAlarmQty2021') ? document.getElementById('valAlarmQty2021').textContent.trim() : '';
+                const a23Txt = document.getElementById('valAlarmQty2023') ? document.getElementById('valAlarmQty2023').textContent.trim() : '';
+
+                let finalQty2021 = (dataObj.remaks2021 && dataObj.remaks2021.toUpperCase() === 'TIDAK ADA DI 2021') ? '0' : (dataObj.qtyRemaks2021 || a21Txt || '');
+                let finalQty2023 = (dataObj.remaks2023 && dataObj.remaks2023.toUpperCase() === 'TIDAK ADA DI 2023') ? '0' : (dataObj.qtyRemaks2023 || a23Txt || '');
+
+                const q21El = document.getElementById('qtyRemaks2021');
+                const q23El = document.getElementById('qtyRemaks2023');
+                if (window.submitMode === 'revisi') {
+                    if (q21El && q21El.dataset.locked === "true") {
+                        finalQty2021 = '';
+                        dataObj.binNewSegregasi2021 = '';
+                    }
+                    if (q23El && q23El.dataset.locked === "true") {
+                        finalQty2023 = '';
+                        dataObj.binNewSegregasi2023 = '';
+                    }
+                }
+
+                const payload = {
+                    tglCycleCount: dataObj.tglCycleCount || '',
+                    pelaksana: dataObj.pelaksana || '',
+                    material: dataObj.materialNumber || '',
+                    materialDescription: dataObj.description || '',
+                    partNumber: dataObj.partNumber || '',
+                    boxPacking: dataObj.boxPacking || '',
+                    uom: dataObj.uom || '',
+                    materialType: dataObj.materialType || '',
+                    terdaftarNonSoh: dataObj.terdaftarNonSoh || '',
+                    qtyNonSoh: dataObj.qtyNonSoh || '',
+                    siteDiskrepansi: dataObj.siteDiskrepansi || '',
+                    qtyDiskrepansi: dataObj.qtyDiskrepansi || '',
+                    tindakan: dataObj.tindakan || '',
+                    qtyTindakan: dataObj.qtyTindakan || '',
+                    qtyCycleCount: dataObj.qtyCycleCount || '', 
+                    totalUnrestricted: currentTotalUnrestricted, 
+                    actualFinal: dataObj.actualFinal || '0',
+                    finalisasiValue: dataObj.finalisasiValue || '0',
+                    alarm: dataObj.alarm || '',
+                    packingToBox: dataObj.packingToBox || '', 
+                    binAsal: dataObj.boxPacking || '',
+                    remarks: dataObj.remarks || '',
+                    totalValue: dataObj.totalValue || '',
+                    overStock: dataObj.overStock || '',
+                    site: dataObj.siteDiskrepansi || '',
+                    asalSite: '',
+                    ccp: '',
+                    remaks2021: dataObj.remaks2021 || '',
+                    qtyRemaks2021: finalQty2021,
+                    remaks2023: dataObj.remaks2023 || '',
+                    qtyRemaks2023: finalQty2023,
+                    partNonSohClosing: dataObj.partNonSohClosing || '',
+                    qtyPartNonSohClosing: dataObj.qtyPartNonSohClosing || '',
+                    boxPartNonSoh2026: dataObj.packingToBox || '',
+                    totalQtyAkhir: dataObj.totalQtyAkhir || '',
+                    
+                    binNew2021: dataObj.binNewSegregasi2021 || '',
+                    qty2021Slot: dataObj.binNewSegregasi2021 ? dataObj.qtyRemaks2021 : (window.submitMode === 'baru' ? finalQty2021 : ''),
+                    binNew2023: dataObj.binNewSegregasi2023 || '',
+                    qty2023Slot: dataObj.binNewSegregasi2023 ? dataObj.qtyRemaks2023 : (window.submitMode === 'baru' ? finalQty2023 : ''),
+                    qtyNonSohSlot: dataObj.qtyPartNonSohClosing || '',
+                    boxNonSohSlot: dataObj.packingToBox || '',
+                    
+                    linkCcp: '',
+                    dokumentasi: dataObj.fotoBase64 || '',
+                    namaFileDokumentasi: `${dataObj.materialNumber || 'Item'}_${dataObj.tglCycleCount || 'Date'}_${dataObj.pelaksana || 'User'}`,
+                    driveFolderId: '1y2VUDN2gIchsQCO7FrBnXYm3gZoUrzcA',
+                    submitMode: window.submitMode || 'baru' 
+                };
+
+                try {
+                    const response = await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'text/plain', 
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("HTTP error! status: " + response.status);
+                    }
+
+                    const result = await response.json();
+
+                    if (result.status === 'success') {
+                        if (loadingOverlay) loadingOverlay.classList.replace('flex', 'hidden');
+                        
+                        if (dataObj.materialNumber) {
+                            const cleanMat = dataObj.materialNumber.toString().trim().toUpperCase().replace(/^0+/, '');
+                            
+                            const prevData = submittedDataMap.get(cleanMat) || {};
+                            const prevQty21 = parseFloat(prevData.qty21) || 0;
+                            const prevQty23 = parseFloat(prevData.qty23) || 0;
+                            const addQty21 = parseFloat(finalQty2021) || 0;
+                            const addQty23 = parseFloat(finalQty2023) || 0;
+                            
+                            const newObj = {
+                                ...prevData,
+                                actualFinal: dataObj.actualFinal,
+                                packingToBox: dataObj.packingToBox,
+                                qtyCycleCount: dataObj.qtyCycleCount,
+                                qtyPartNonSoh2026: dataObj.qtyPartNonSohClosing || prevData.qtyPartNonSoh2026 || '0',
+                                boxPartNonSoh2026: dataObj.packingToBox || prevData.boxPartNonSoh2026 || '',
+                                qty21: prevQty21 + addQty21,
+                                qty23: prevQty23 + addQty23
+                            };
+                            window.sessionSubmittedData[cleanMat] = newObj;
+                            submittedDataMap.set(cleanMat, newObj);
+                        }
+
+                        window.submitMode = 'baru';
+                        const revisiModeBadge = document.getElementById('revisiModeBadge');
+                        if (revisiModeBadge) revisiModeBadge.classList.add('hidden');
+
+                        if (successModal) successModal.classList.remove('hidden');
+                        
+                        formObj.reset();
+                        setTglCycleCountWITA();
+
+                        if (partNumberInput) partNumberInput.removeAttribute('readonly');
+                        if (boxPackingInput) boxPackingInput.removeAttribute('readonly');
+                        if (uomInput) uomInput.removeAttribute('readonly');
+                        if (storageBinInput) storageBinInput.removeAttribute('readonly');
+                        if (remarksInput) remarksInput.removeAttribute('readonly');
+                        if (totalValueInput) totalValueInput.removeAttribute('readonly');
+                        if (overStockInput) overStockInput.removeAttribute('readonly');
+                        const rem21El = document.getElementById('remaks2021');
+                        const rem23El = document.getElementById('remaks2023');
+                        const qtyRem21El = document.getElementById('qtyRemaks2021');
+                        const qtyRem23El = document.getElementById('qtyRemaks2023');
+                        if (rem21El) rem21El.removeAttribute('readonly');
+                        if (rem23El) rem23El.removeAttribute('readonly');
+                        if (qtyRem21El) { qtyRem21El.removeAttribute('readonly'); qtyRem21El.value = ''; qtyRem21El.dataset.locked = "false"; }
+                        if (qtyRem23El) { qtyRem23El.removeAttribute('readonly'); qtyRem23El.value = ''; qtyRem23El.dataset.locked = "false"; }
+                        if (materialTypeInput) materialTypeInput.removeAttribute('readonly');
+                        if (terdaftarNonSohInput) terdaftarNonSohInput.removeAttribute('readonly');
+                        if (qtyNonSohInput) qtyNonSohInput.removeAttribute('readonly');
+                        if (packingToBoxSelect) {
+                            packingToBoxSelect.removeAttribute('readonly');
+                            packingToBoxSelect.removeAttribute('required');
+                        }
+                        
+                        const infoPrev21 = document.getElementById('infoPrev21');
+                        if (infoPrev21) infoPrev21.classList.add('hidden');
+                        const infoPrev23 = document.getElementById('infoPrev23');
+                        if (infoPrev23) infoPrev23.classList.add('hidden');
+                        const infoPrevNonSoh = document.getElementById('infoPrevNonSoh');
+                        if (infoPrevNonSoh) infoPrevNonSoh.classList.add('hidden');
+                        const infoPrevBox = document.getElementById('infoPrevBox');
+                        if (infoPrevBox) infoPrevBox.classList.add('hidden');
+
+                        const prevQtyFeedback = document.getElementById('prevQtyFeedback');
+                        if (prevQtyFeedback) prevQtyFeedback.classList.add('hidden');
+
+                        if (pelaksanaInput) pelaksanaInput.value = currentPicName;
+                        if (statusIndicator) statusIndicator.classList.add('hidden');
+                        if (mb52Card) mb52Card.classList.add('hidden');
+                        currentMaterialPrice = 0;
+                        currentTotalUnrestricted = 0;
+                        calculateActualFinal();
+                        resetCameraUI();
+                        
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                        setTimeout(() => {
+                            if (successModal) successModal.classList.add('hidden');
+                        }, 2000);
+                    } else {
+                        throw new Error(result.message || "Gagal menyimpan.");
+                    }
+                    
+                } catch (error) {
+                    console.error('Error!', error.message);
+                    if (loadingOverlay) loadingOverlay.classList.replace('flex', 'hidden');
+                    showToast("Gagal mengirim: " + error.message, "error");
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = 'Submit Data Inspeksi';
+                    }
+                }
+            });
+        }
+
+        const btnNextForm = document.getElementById('btnNextForm');
+        if (btnNextForm) {
+            btnNextForm.addEventListener('click', function() {
+                document.getElementById('nextBtnContainer').classList.add('hidden');
+                document.getElementById('remaksSection').classList.remove('hidden');
+                document.getElementById('submitBtnContainer').classList.remove('hidden');
+                document.getElementById('remaksSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+
+        const qtyRemaks2021 = document.getElementById('qtyRemaks2021');
+        const qtyRemaks2023 = document.getElementById('qtyRemaks2023');
+        const qtyPartNonSohClosing = document.getElementById('qtyPartNonSohClosing');
+        const totalQtyAkhir = document.getElementById('totalQtyAkhir');
+
+        function calcTotalQtyAkhir() {
+            const q1 = parseFloat(qtyRemaks2021 ? qtyRemaks2021.value : 0) || 0;
+            const q2 = parseFloat(qtyRemaks2023 ? qtyRemaks2023.value : 0) || 0;
+            const q3 = parseFloat(qtyPartNonSohClosing ? qtyPartNonSohClosing.value : 0) || 0;
+            
+            let prevNonSoh = 0;
+            if (window.submitMode === 'revisi' && window.currentDuplicateData) {
+                prevNonSoh = parseFloat(window.currentDuplicateData.qtyPartNonSoh2026) || 0;
+            }
+
+            if (totalQtyAkhir) totalQtyAkhir.value = q1 + q2 + prevNonSoh + q3;
+        }
+
+        function toggleBinNewSegregasi() {
+            const q21Input = document.getElementById('qtyRemaks2021');
+            const q23Input = document.getElementById('qtyRemaks2023');
+            
+            const q1 = parseFloat(q21Input ? q21Input.value : 0) || 0;
+            const q2 = parseFloat(q23Input ? q23Input.value : 0) || 0;
+            
+            const isQ21Locked = q21Input && q21Input.dataset.locked === "true";
+            const isQ23Locked = q23Input && q23Input.dataset.locked === "true";
+            
+            const group2021 = document.getElementById('binNew2021Group');
+            if (group2021) {
+                if (q1 > 0 && !isQ21Locked) group2021.classList.remove('hidden');
+                else { group2021.classList.add('hidden'); document.getElementById('binNewSegregasi2021').value = ''; }
+            }
+            
+            const group2023 = document.getElementById('binNew2023Group');
+            if (group2023) {
+                if (q2 > 0 && !isQ23Locked) group2023.classList.remove('hidden');
+                else { group2023.classList.add('hidden'); document.getElementById('binNewSegregasi2023').value = ''; }
+            }
+        }
+
+        function checkAlarmQtyPopup(inputId, alarmValId) {
+            const inputEl = document.getElementById(inputId);
+            const alarmValEl = document.getElementById(alarmValId);
+            if (inputEl && alarmValEl && alarmValEl.textContent) {
+                const alarmVal = parseFloat(alarmValEl.textContent) || 0;
+                let inputVal = parseFloat(inputEl.value) || 0;
+                
+                let maxAllowed = alarmVal;
+                if (window.submitMode === 'revisi' && window.currentDuplicateData) {
+                    const prevKey = inputId === 'qtyRemaks2021' ? 'qty21' : 'qty23';
+                    const rawPrev = parseFloat(window.currentDuplicateData[prevKey]);
+                    const prevQty = !isNaN(rawPrev) ? rawPrev : 0;
+                    maxAllowed = alarmVal - prevQty;
+                    if (maxAllowed < 0) maxAllowed = 0;
+                }
+
+                if (inputVal > maxAllowed) {
+                    inputEl.value = maxAllowed;
+                    if (typeof calcTotalQtyAkhir === 'function') calcTotalQtyAkhir();
+                    
+                    const modal = document.getElementById('alarmPopupModal');
+                    const modalMsg = document.getElementById('alarmPopupMsg');
+                    if (modal && modalMsg) {
+                        modalMsg.textContent = window.submitMode === 'revisi'
+                            ? `Batas maksimal input saat ini adalah ${maxAllowed} (Sisa dari Alarm).`
+                            : "Masukan Sisa Stock ke Box Part Non SOH 2026";
+                        modal.classList.remove('hidden');
+                    }
+                }
+            }
+        }
+
+        if (qtyRemaks2021) {
+            qtyRemaks2021.addEventListener('input', function() {
+                calcTotalQtyAkhir();
+                checkAlarmQtyPopup('qtyRemaks2021', 'valAlarmQty2021');
+                toggleBinNewSegregasi();
+            });
+        }
+        
+        if (qtyRemaks2023) {
+            qtyRemaks2023.addEventListener('input', function() {
+                calcTotalQtyAkhir();
+                checkAlarmQtyPopup('qtyRemaks2023', 'valAlarmQty2023');
+                toggleBinNewSegregasi();
+            });
+        }
+        
+        if (qtyPartNonSohClosing) qtyPartNonSohClosing.addEventListener('input', calcTotalQtyAkhir);
+
+        setTglCycleCountWITA();
+        setInterval(setTglCycleCountWITA, 1000);
+
+        if (formObj) {
+            formObj.addEventListener('reset', function() {
+                setTimeout(setTglCycleCountWITA, 50);
+                const nextBtnCont = document.getElementById('nextBtnContainer');
+                const remaksSec = document.getElementById('remaksSection');
+                const submitCont = document.getElementById('submitBtnContainer');
+                if (nextBtnCont) nextBtnCont.classList.add('hidden');
+                if (remaksSec) remaksSec.classList.add('hidden');
+                if (submitCont) submitCont.classList.add('hidden');
+                
+                const group2021 = document.getElementById('binNew2021Group');
+                const group2023 = document.getElementById('binNew2023Group');
+                if(group2021) group2021.classList.add('hidden');
+                if(group2023) group2023.classList.add('hidden');
+                
+                const infoPrev21 = document.getElementById('infoPrev21');
+                if (infoPrev21) infoPrev21.classList.add('hidden');
+                const infoPrev23 = document.getElementById('infoPrev23');
+                if (infoPrev23) infoPrev23.classList.add('hidden');
+            });
+        }
+
+        if (loginPicName) {
+            loginPicName.addEventListener('change', function() {
+                loginPicName.classList.remove('border-red-500', 'bg-red-50');
+                loginError.classList.add('hidden');
+            });
+        }
+        if (loginPassword) {
+            loginPassword.addEventListener('input', function() {
+                loginPassword.classList.remove('border-red-500', 'bg-red-50');
+                loginError.classList.add('hidden');
+            });
+        }
+
+        setTimeout(() => {
+            const binNew2021 = document.getElementById('binNewSegregasi2021');
+            const binNew2023 = document.getElementById('binNewSegregasi2023');
+            const packingToBoxSelect = document.getElementById('packingToBox');
+            
+            let segregasiHTML = '<option value="">-- Pilih Box --</option>';
+            const abjad = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            for (let i = 0; i < abjad.length; i++) {
+                for (let j = 1; j <= 20; j++) {
+                    segregasiHTML += `<option value="BOX ${abjad[i]}${j}">BOX ${abjad[i]}${j}</option>`;
+                }
+            }
+            if (binNew2021) binNew2021.innerHTML = segregasiHTML;
+            if (binNew2023) binNew2023.innerHTML = segregasiHTML;
+
+            let nsohHTML = '<option value="">-- Pilih Box NSOH --</option>';
+            for (let k = 1; k <= 20; k++) {
+                let num = k < 10 ? '0' + k : k;
+                nsohHTML += `<option value="BOX NSOH ${num}">BOX NSOH ${num}</option>`;
+            }
+            if (packingToBoxSelect) {
+                packingToBoxSelect.innerHTML = nsohHTML;
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
