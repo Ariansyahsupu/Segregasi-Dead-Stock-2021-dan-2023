@@ -461,7 +461,8 @@
     <script>
         // Logika Javascript 100% TIDAK DIUBAH (Hanya styling string class diganti ke standar baru)
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxHjiJ7eu5YBjLufOlaiJeq7V-nV86PYzJUbjXt6l6CIHwgInwvca0dzDZToOYkWNNx/exec'; 
-        const CSV_MASTER_DATA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSZRIPSRmOWCiV4EjT0GdROSGHONC5dAfRzDCJdxn0HM0b5hXFastfll9wphlShIrdh8B2DH1n0MEgZ/pub?gid=1296861980&single=true&output=csv';
+        const CSV_MASTER_DATA_URL = 'https://docs.google.com/spreadsheets/d/1yz-T5ecwKBAfD0ewX3fUpnAhQ_SyPBA_pdk5iB2oCXM/export?format=csv&gid=1296861980';
+        const CSV_SECONDARY_DATA_URL = 'https://docs.google.com/spreadsheets/d/1yz-T5ecwKBAfD0ewX3fUpnAhQ_SyPBA_pdk5iB2oCXM/export?format=csv&gid=1095389179';
         const CSV_ANALISA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ89SrRMBq0EYLeMFFTMAWbhVl-pzj4x9xZjW73nRw4FCTdIOGYplmkpHkKaf3VRRVnlqGjQWb8fcet/pub?gid=909242961&single=true&output=csv';
         const CSV_SUBMITTED_URL = 'https://docs.google.com/spreadsheets/d/1RHIMLyk6kSONUZPsd1O--bz1c96IPDt9Z4pZd_2ZJw4/export?format=csv&gid=984194627';
         const CSV_PRICE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ89SrRMBq0EYLeMFFTMAWbhVl-pzj4x9xZjW73nRw4FCTdIOGYplmkpHkKaf3VRRVnlqGjQWb8fcet/pub?gid=247161967&single=true&output=csv';
@@ -469,12 +470,15 @@
 
         const masterDataMap = new Map();
         const masterMpnMap = new Map();
+        const secondaryDataMap = new Map();
+        const secondaryMpnMap = new Map();
         const priceDataMap = new Map();
         const mb52DataMap = new Map();
         const submittedDataMap = new Map();
         const cachedAnalisaMap = new Map();
 
         let masterDataIndices = { mat: 0, desc: 1, mpn: 2, box: 3, uom: 4, bin: 5, rem: 6, val: 7, over: 8, rem21: -1, rem23: -1, qtyDs21: -1, qtyDs23: -1 };
+        let secondaryDataIndices = { mat: 0, desc: 1, mpn: 2, box: 3, uom: 4, bin: 5, over: 8 };
 
         window.sessionSubmittedData = {};
         window.submitMode = 'baru';
@@ -482,6 +486,7 @@
         let currentMaterialPrice = 0;
         let currentTotalUnrestricted = 0; 
         let cachedMasterData = null; 
+        let cachedSecondaryData = null;
         let cachedAnalisaData = null;
         let cachedPriceData = null;
         let cachedMb52Data = null;
@@ -715,6 +720,39 @@
                     masterDataMap.set(cleanMatNum, row); 
                 }
                 if (mpnVal) masterMpnMap.set(mpnVal, row);
+            }
+        }
+
+        function indexSecondaryData(data) {
+            secondaryDataMap.clear();
+            secondaryMpnMap.clear();
+            if (!data || !Array.isArray(data) || data.length === 0) return;
+
+            const headers = data[0];
+            for (let c = 0; c < headers.length; c++) {
+                const hRaw = headers[c] ? headers[c].toString().trim().toUpperCase() : '';
+                const h = hRaw.replace(/\s+/g, ' '); 
+                
+                if (h === 'MATERIAL' || h === 'MATERIAL NUMBER') secondaryDataIndices.mat = c;
+                if (h === 'MATERIAL DESCRIPTION') secondaryDataIndices.desc = c;
+                if (h === 'MFR PART NUMBER' || h === 'PART NUMBER') secondaryDataIndices.mpn = c;
+                if (h === 'BOX PACKING') secondaryDataIndices.box = c;
+                if (h === 'BASE UNIT OF MEASURE' || h === 'UOM') secondaryDataIndices.uom = c;
+                if (h === 'STORAGE BIN') secondaryDataIndices.bin = c;
+                if (h === 'OVER STOCK') secondaryDataIndices.over = c;
+            }
+
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (!row) continue;
+                const matNum = row[secondaryDataIndices.mat] ? row[secondaryDataIndices.mat].toString().trim().toUpperCase() : '';
+                const cleanMatNum = matNum.replace(/^0+/, ''); 
+                const mpnVal = row[secondaryDataIndices.mpn] ? row[secondaryDataIndices.mpn].toString().trim().toUpperCase() : '';
+                if (matNum) {
+                    secondaryDataMap.set(matNum, row);
+                    secondaryDataMap.set(cleanMatNum, row); 
+                }
+                if (mpnVal) secondaryMpnMap.set(mpnVal, row);
             }
         }
 
@@ -1055,6 +1093,12 @@
                     indexMasterData(data);
                 }).catch(e => console.warn(e));
             }
+            if (!cachedSecondaryData && CSV_SECONDARY_DATA_URL) {
+                loadCSV(CSV_SECONDARY_DATA_URL).then(data => {
+                    cachedSecondaryData = data;
+                    indexSecondaryData(data);
+                }).catch(e => console.warn(e));
+            }
             if (!cachedPriceData && CSV_PRICE_URL) {
                 loadCSV(CSV_PRICE_URL).then(data => {
                     cachedPriceData = data;
@@ -1347,6 +1391,29 @@
                     }
                 }
 
+                if (matches.size < 15 && cachedSecondaryData && Array.isArray(cachedSecondaryData)) {
+                    for (let i = 1; i < cachedSecondaryData.length; i++) {
+                        const row = cachedSecondaryData[i];
+                        if (!row) continue;
+                        const matNum = row[secondaryDataIndices.mat] ? row[secondaryDataIndices.mat].toString().trim().toUpperCase() : '';
+                        const cleanMatNum = matNum.replace(/^0+/, '');
+                        const desc = row[secondaryDataIndices.desc] ? row[secondaryDataIndices.desc].toString().trim() : '';
+                        const mpnVal = row[secondaryDataIndices.mpn] ? row[secondaryDataIndices.mpn].toString().trim().toUpperCase() : '';
+
+                        if (cleanMatNum.includes(val) || matNum.includes(val) || mpnVal.includes(val)) {
+                            if (!matches.has(cleanMatNum)) {
+                                matches.set(cleanMatNum, {
+                                    material: cleanMatNum,
+                                    originalMaterial: matNum,
+                                    desc: desc,
+                                    mpn: mpnVal
+                                });
+                            }
+                            if (matches.size >= 15) break;
+                        }
+                    }
+                }
+
                 if (matches.size > 0) {
                     matches.forEach(item => {
                         const div = document.createElement('div');
@@ -1440,6 +1507,10 @@
                         cachedMasterData = await loadCSV(CSV_MASTER_DATA_URL);
                         indexMasterData(cachedMasterData);
                     }
+                    if (!cachedSecondaryData && CSV_SECONDARY_DATA_URL) {
+                        cachedSecondaryData = await loadCSV(CSV_SECONDARY_DATA_URL);
+                        indexSecondaryData(cachedSecondaryData);
+                    }
                     if (!cachedAnalisaData && CSV_ANALISA_URL) {
                         cachedAnalisaData = await loadCSV(CSV_ANALISA_URL);
                         indexAnalisaData(cachedAnalisaData);
@@ -1454,104 +1525,154 @@
                     }
 
                     const cleanInputVal = inputVal.replace(/^0+/, '');
-                    const foundRowArray = masterDataMap.get(inputVal) || masterDataMap.get(cleanInputVal) || masterMpnMap.get(inputVal);
+                    let foundRowArray = masterDataMap.get(inputVal) || masterDataMap.get(cleanInputVal) || masterMpnMap.get(inputVal);
+                    let isSecondary = false;
+
+                    if (!foundRowArray) {
+                        foundRowArray = secondaryDataMap.get(inputVal) || secondaryDataMap.get(cleanInputVal) || secondaryMpnMap.get(inputVal);
+                        if (foundRowArray) isSecondary = true;
+                    }
 
                     if (statusIndicator) statusIndicator.classList.remove('hidden');
                     
                     let actualMatNum = ''; 
                     let pickedUom = '';
                     if (foundRowArray) {
-                        actualMatNum = foundRowArray[masterDataIndices.mat] ? foundRowArray[masterDataIndices.mat].toString().trim() : '';
-                        const actualMpn = foundRowArray[masterDataIndices.mpn] ? foundRowArray[masterDataIndices.mpn].toString().trim() : '';
-                        materialNumberInput.value = actualMatNum || actualMpn;
-                        
-                        if (descriptionInput) descriptionInput.value = foundRowArray[masterDataIndices.desc] ? foundRowArray[masterDataIndices.desc].trim() : '';
-                        if (partNumberInput) {
-                            partNumberInput.value = foundRowArray[masterDataIndices.mpn] ? foundRowArray[masterDataIndices.mpn].trim() : '';
-                            partNumberInput.setAttribute('readonly', 'true');
-                        }
-                        if (boxPackingInput) {
-                            boxPackingInput.value = foundRowArray[masterDataIndices.box] ? foundRowArray[masterDataIndices.box].trim() : '';
-                            boxPackingInput.setAttribute('readonly', 'true');
-                        }
-                        pickedUom = foundRowArray[masterDataIndices.uom] ? foundRowArray[masterDataIndices.uom].trim() : '';
-                        if (uomInput) {
-                            uomInput.value = pickedUom;
-                            uomInput.setAttribute('readonly', 'true');
-                        }
-                        if (storageBinInput) {
-                            storageBinInput.value = foundRowArray[masterDataIndices.bin] ? foundRowArray[masterDataIndices.bin].trim() : '';
-                            storageBinInput.setAttribute('readonly', 'true');
-                        }
-                        if (remarksInput) {
-                            remarksInput.value = foundRowArray[masterDataIndices.rem] ? foundRowArray[masterDataIndices.rem].trim() : '';
-                            remarksInput.setAttribute('readonly', 'true');
-                        }
-                        if (totalValueInput) {
-                            totalValueInput.value = foundRowArray[masterDataIndices.val] ? foundRowArray[masterDataIndices.val].trim() : '';
-                            totalValueInput.setAttribute('readonly', 'true');
-                        }
-                        if (overStockInput) {
-                            overStockInput.value = foundRowArray[masterDataIndices.over] ? foundRowArray[masterDataIndices.over].trim() : '';
-                            overStockInput.setAttribute('readonly', 'true');
-                        }
-                        if (remaks2021Input && masterDataIndices.rem21 !== -1) {
-                            const val2021 = foundRowArray[masterDataIndices.rem21] ? foundRowArray[masterDataIndices.rem21].trim() : '';
-                            remaks2021Input.value = val2021;
-                            remaks2021Input.setAttribute('readonly', 'true');
+                        if (!isSecondary) {
+                            actualMatNum = foundRowArray[masterDataIndices.mat] ? foundRowArray[masterDataIndices.mat].toString().trim() : '';
+                            const actualMpn = foundRowArray[masterDataIndices.mpn] ? foundRowArray[masterDataIndices.mpn].toString().trim() : '';
+                            materialNumberInput.value = actualMatNum || actualMpn;
                             
+                            if (descriptionInput) descriptionInput.value = foundRowArray[masterDataIndices.desc] ? foundRowArray[masterDataIndices.desc].trim() : '';
+                            if (partNumberInput) {
+                                partNumberInput.value = foundRowArray[masterDataIndices.mpn] ? foundRowArray[masterDataIndices.mpn].trim() : '';
+                                partNumberInput.setAttribute('readonly', 'true');
+                            }
+                            if (boxPackingInput) {
+                                boxPackingInput.value = foundRowArray[masterDataIndices.box] ? foundRowArray[masterDataIndices.box].trim() : '';
+                                boxPackingInput.setAttribute('readonly', 'true');
+                            }
+                            pickedUom = foundRowArray[masterDataIndices.uom] ? foundRowArray[masterDataIndices.uom].trim() : '';
+                            if (uomInput) {
+                                uomInput.value = pickedUom;
+                                uomInput.setAttribute('readonly', 'true');
+                            }
+                            if (storageBinInput) {
+                                storageBinInput.value = foundRowArray[masterDataIndices.bin] ? foundRowArray[masterDataIndices.bin].trim() : '';
+                                storageBinInput.setAttribute('readonly', 'true');
+                            }
+                            if (remarksInput) {
+                                remarksInput.value = foundRowArray[masterDataIndices.rem] ? foundRowArray[masterDataIndices.rem].trim() : '';
+                                remarksInput.setAttribute('readonly', 'true');
+                            }
+                            if (totalValueInput) {
+                                totalValueInput.value = foundRowArray[masterDataIndices.val] ? foundRowArray[masterDataIndices.val].trim() : '';
+                                totalValueInput.setAttribute('readonly', 'true');
+                            }
+                            if (overStockInput) {
+                                overStockInput.value = foundRowArray[masterDataIndices.over] ? foundRowArray[masterDataIndices.over].trim() : '';
+                                overStockInput.setAttribute('readonly', 'true');
+                            }
+                            if (remaks2021Input && masterDataIndices.rem21 !== -1) {
+                                const val2021 = foundRowArray[masterDataIndices.rem21] ? foundRowArray[masterDataIndices.rem21].trim() : '';
+                                remaks2021Input.value = val2021;
+                                remaks2021Input.setAttribute('readonly', 'true');
+                                
+                                const qty2021Input = document.getElementById('qtyRemaks2021');
+                                if (qty2021Input) {
+                                    if (val2021.toUpperCase() === 'TIDAK ADA DI 2021') {
+                                        qty2021Input.value = 0;
+                                        qty2021Input.setAttribute('readonly', 'true');
+                                    } else {
+                                        qty2021Input.value = '';
+                                        qty2021Input.removeAttribute('readonly');
+                                    }
+                                }
+                            }
+                            if (masterDataIndices.qtyDs21 !== -1) {
+                                const alarmQty2021 = document.getElementById('alarmQty2021');
+                                const valAlarmQty2021 = document.getElementById('valAlarmQty2021');
+                                const valQty21 = foundRowArray[masterDataIndices.qtyDs21] ? foundRowArray[masterDataIndices.qtyDs21].trim() : '';
+                                if (alarmQty2021 && valAlarmQty2021) {
+                                    if (valQty21) {
+                                        valAlarmQty2021.textContent = valQty21;
+                                        alarmQty2021.classList.remove('hidden');
+                                    } else {
+                                        alarmQty2021.classList.add('hidden');
+                                    }
+                                }
+                            }
+                            if (remaks2023Input && masterDataIndices.rem23 !== -1) {
+                                const val2023 = foundRowArray[masterDataIndices.rem23] ? foundRowArray[masterDataIndices.rem23].trim() : '';
+                                remaks2023Input.value = val2023;
+                                remaks2023Input.setAttribute('readonly', 'true');
+                                
+                                const qty2023Input = document.getElementById('qtyRemaks2023');
+                                if (qty2023Input) {
+                                    if (val2023.toUpperCase() === 'TIDAK ADA DI 2023') {
+                                        qty2023Input.value = 0;
+                                        qty2023Input.setAttribute('readonly', 'true');
+                                    } else {
+                                        qty2023Input.value = '';
+                                        qty2023Input.removeAttribute('readonly');
+                                    }
+                                }
+                            }
+                            if (masterDataIndices.qtyDs23 !== -1) {
+                                const alarmQty2023 = document.getElementById('alarmQty2023');
+                                const valAlarmQty2023 = document.getElementById('valAlarmQty2023');
+                                const valQty23 = foundRowArray[masterDataIndices.qtyDs23] ? foundRowArray[masterDataIndices.qtyDs23].trim() : '';
+                                if (alarmQty2023 && valAlarmQty2023) {
+                                    if (valQty23) {
+                                        valAlarmQty2023.textContent = valQty23;
+                                        alarmQty2023.classList.remove('hidden');
+                                    } else {
+                                        alarmQty2023.classList.add('hidden');
+                                    }
+                                }
+                            }
+                        } else {
+                            // LOGIKA CADANGAN: Mengambil data dari Link Secondary Database
+                            actualMatNum = foundRowArray[secondaryDataIndices.mat] ? foundRowArray[secondaryDataIndices.mat].toString().trim() : '';
+                            const actualMpn = foundRowArray[secondaryDataIndices.mpn] ? foundRowArray[secondaryDataIndices.mpn].toString().trim() : '';
+                            materialNumberInput.value = actualMatNum || actualMpn;
+                            
+                            if (descriptionInput) descriptionInput.value = foundRowArray[secondaryDataIndices.desc] ? foundRowArray[secondaryDataIndices.desc].trim() : '';
+                            if (partNumberInput) {
+                                partNumberInput.value = foundRowArray[secondaryDataIndices.mpn] ? foundRowArray[secondaryDataIndices.mpn].trim() : '';
+                                partNumberInput.setAttribute('readonly', 'true');
+                            }
+                            if (boxPackingInput) {
+                                boxPackingInput.value = foundRowArray[secondaryDataIndices.box] ? foundRowArray[secondaryDataIndices.box].trim() : '';
+                                boxPackingInput.setAttribute('readonly', 'true');
+                            }
+                            pickedUom = foundRowArray[secondaryDataIndices.uom] ? foundRowArray[secondaryDataIndices.uom].trim() : '';
+                            if (uomInput) {
+                                uomInput.value = pickedUom;
+                                uomInput.setAttribute('readonly', 'true');
+                            }
+                            if (storageBinInput) {
+                                storageBinInput.value = foundRowArray[secondaryDataIndices.bin] ? foundRowArray[secondaryDataIndices.bin].trim() : '';
+                                storageBinInput.setAttribute('readonly', 'true');
+                            }
+                            if (overStockInput) {
+                                overStockInput.value = foundRowArray[secondaryDataIndices.over] ? foundRowArray[secondaryDataIndices.over].trim() : '';
+                                overStockInput.setAttribute('readonly', 'true');
+                            }
+                            
+                            // Mengosongkan field yang tidak ada di data sekunder dan Set Default Lock untuk DS
+                            if (remarksInput) { remarksInput.value = ''; remarksInput.setAttribute('readonly', 'true'); }
+                            if (totalValueInput) { totalValueInput.value = ''; totalValueInput.setAttribute('readonly', 'true'); }
+                            if (remaks2021Input) { remaks2021Input.value = 'TIDAK ADA DI 2021'; remaks2021Input.setAttribute('readonly', 'true'); }
+                            if (remaks2023Input) { remaks2023Input.value = 'TIDAK ADA DI 2023'; remaks2023Input.setAttribute('readonly', 'true'); }
                             const qty2021Input = document.getElementById('qtyRemaks2021');
-                            if (qty2021Input) {
-                                if (val2021.toUpperCase() === 'TIDAK ADA DI 2021') {
-                                    qty2021Input.value = 0;
-                                    qty2021Input.setAttribute('readonly', 'true');
-                                } else {
-                                    qty2021Input.value = '';
-                                    qty2021Input.removeAttribute('readonly');
-                                }
-                            }
-                        }
-                        if (masterDataIndices.qtyDs21 !== -1) {
-                            const alarmQty2021 = document.getElementById('alarmQty2021');
-                            const valAlarmQty2021 = document.getElementById('valAlarmQty2021');
-                            const valQty21 = foundRowArray[masterDataIndices.qtyDs21] ? foundRowArray[masterDataIndices.qtyDs21].trim() : '';
-                            if (alarmQty2021 && valAlarmQty2021) {
-                                if (valQty21) {
-                                    valAlarmQty2021.textContent = valQty21;
-                                    alarmQty2021.classList.remove('hidden');
-                                } else {
-                                    alarmQty2021.classList.add('hidden');
-                                }
-                            }
-                        }
-                        if (remaks2023Input && masterDataIndices.rem23 !== -1) {
-                            const val2023 = foundRowArray[masterDataIndices.rem23] ? foundRowArray[masterDataIndices.rem23].trim() : '';
-                            remaks2023Input.value = val2023;
-                            remaks2023Input.setAttribute('readonly', 'true');
-                            
+                            if (qty2021Input) { qty2021Input.value = 0; qty2021Input.setAttribute('readonly', 'true'); qty2021Input.dataset.locked = "true"; }
                             const qty2023Input = document.getElementById('qtyRemaks2023');
-                            if (qty2023Input) {
-                                if (val2023.toUpperCase() === 'TIDAK ADA DI 2023') {
-                                    qty2023Input.value = 0;
-                                    qty2023Input.setAttribute('readonly', 'true');
-                                } else {
-                                    qty2023Input.value = '';
-                                    qty2023Input.removeAttribute('readonly');
-                                }
-                            }
-                        }
-                        if (masterDataIndices.qtyDs23 !== -1) {
+                            if (qty2023Input) { qty2023Input.value = 0; qty2023Input.setAttribute('readonly', 'true'); qty2023Input.dataset.locked = "true"; }
+                            const alarmQty2021 = document.getElementById('alarmQty2021');
+                            if (alarmQty2021) alarmQty2021.classList.add('hidden');
                             const alarmQty2023 = document.getElementById('alarmQty2023');
-                            const valAlarmQty2023 = document.getElementById('valAlarmQty2023');
-                            const valQty23 = foundRowArray[masterDataIndices.qtyDs23] ? foundRowArray[masterDataIndices.qtyDs23].trim() : '';
-                            if (alarmQty2023 && valAlarmQty2023) {
-                                if (valQty23) {
-                                    valAlarmQty2023.textContent = valQty23;
-                                    alarmQty2023.classList.remove('hidden');
-                                } else {
-                                    alarmQty2023.classList.add('hidden');
-                                }
-                            }
+                            if (alarmQty2023) alarmQty2023.classList.add('hidden');
                         }
                         
                         let foundAnalisa = null;
@@ -1705,10 +1826,10 @@
                         const rem23El = document.getElementById('remaks2023');
                         const qtyRem21El = document.getElementById('qtyRemaks2021');
                         const qtyRem23El = document.getElementById('qtyRemaks2023');
-                        if (rem21El) rem21El.removeAttribute('readonly');
-                        if (rem23El) rem23El.removeAttribute('readonly');
-                        if (qtyRem21El) { qtyRem21El.removeAttribute('readonly'); qtyRem21El.value = ''; qtyRem21El.dataset.locked = "false"; }
-                        if (qtyRem23El) { qtyRem23El.removeAttribute('readonly'); qtyRem23El.value = ''; qtyRem23El.dataset.locked = "false"; }
+                        if (rem21El) { rem21El.value = 'TIDAK ADA DI 2021'; rem21El.setAttribute('readonly', 'true'); }
+                        if (rem23El) { rem23El.value = 'TIDAK ADA DI 2023'; rem23El.setAttribute('readonly', 'true'); }
+                        if (qtyRem21El) { qtyRem21El.value = 0; qtyRem21El.setAttribute('readonly', 'true'); qtyRem21El.dataset.locked = "true"; }
+                        if (qtyRem23El) { qtyRem23El.value = 0; qtyRem23El.setAttribute('readonly', 'true'); qtyRem23El.dataset.locked = "true"; }
                         if (materialTypeInput) materialTypeInput.removeAttribute('readonly');
                         if (terdaftarNonSohInput) terdaftarNonSohInput.removeAttribute('readonly');
                         if (qtyNonSohInput) qtyNonSohInput.removeAttribute('readonly');
@@ -2119,8 +2240,8 @@
                 const a21Txt = document.getElementById('valAlarmQty2021') ? document.getElementById('valAlarmQty2021').textContent.trim() : '';
                 const a23Txt = document.getElementById('valAlarmQty2023') ? document.getElementById('valAlarmQty2023').textContent.trim() : '';
 
-                let finalQty2021 = (dataObj.remaks2021 && dataObj.remaks2021.toUpperCase() === 'TIDAK ADA DI 2021') ? '0' : (dataObj.qtyRemaks2021 || a21Txt || '');
-                let finalQty2023 = (dataObj.remaks2023 && dataObj.remaks2023.toUpperCase() === 'TIDAK ADA DI 2023') ? '0' : (dataObj.qtyRemaks2023 || a23Txt || '');
+                let finalQty2021 = (dataObj.remaks2021 && dataObj.remaks2021.toUpperCase() === 'TIDAK ADA DI 2021') ? '' : (dataObj.qtyRemaks2021 || a21Txt || '');
+                let finalQty2023 = (dataObj.remaks2023 && dataObj.remaks2023.toUpperCase() === 'TIDAK ADA DI 2023') ? '' : (dataObj.qtyRemaks2023 || a23Txt || '');
 
                 const q21El = document.getElementById('qtyRemaks2021');
                 const q23El = document.getElementById('qtyRemaks2023');
